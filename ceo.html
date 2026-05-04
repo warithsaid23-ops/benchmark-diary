@@ -505,10 +505,21 @@ async function loadData(){
   }
 
   try {
-    // Use a CORS proxy to fetch the CSV
-    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEET_CSV);
-    const res = await fetch(proxyUrl);
-    const csv = await res.text();
+    // Try multiple CORS proxies
+    let csv = null;
+    const proxies = [
+      'https://corsproxy.io/?' + encodeURIComponent(SHEET_CSV),
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEET_CSV),
+      'https://proxy.cors.sh/' + SHEET_CSV,
+    ];
+    
+    for (const proxyUrl of proxies) {
+      try {
+        const res = await fetch(proxyUrl, {headers: {'x-cors-api-key': 'temp_' + Date.now()}});
+        if (res.ok) { csv = await res.text(); break; }
+      } catch(e) { continue; }
+    }
+    if (!csv) throw new Error('All proxies failed — check your sheet is published as CSV');
     allReports = parseCSV(csv);
     renderStats();
     renderReports(allReports);
