@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>BEL — Daily Site Diary</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── RESET & BASE ───────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#0F2340;
+  --steel:#1A4A7A;
+  --gold:#C9A84C;
+  --green:#1A6B3A;
+  --red:#B91C1C;
+  --amber:#D97706;
+  --card:#FFFFFF;
+  --bg:#F1F4F8;
+  --border:#D8E0EA;
+  --text:#0F1923;
+  --muted:#64748B;
+  --light:#EEF2F7;
+  --purple:#4C1D95;
+  --success:#065F46;
+  --radius:10px;
+  --shadow:0 2px 12px rgba(15,35,64,0.08);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.6;
+  min-height:100vh;
+}
+
+/* ── TOP BAR ────────────────────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:var(--navy);
+  padding:0 20px;
+  height:52px;
+  display:flex;align-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+}
+.topbar-logo{
+  display:flex;align-items:center;gap:10px;
+}
+.topbar-mark{
+  width:32px;height:32px;
+  background:var(--gold);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;
+  font-size:11px;font-weight:500;
+  color:var(--navy);
+  flex-shrink:0;
+}
+.topbar-name{
+  color:#fff;font-size:13px;font-weight:600;
+  letter-spacing:0.02em;
+}
+.topbar-right{
+  margin-left:auto;
+  display:flex;align-items:center;gap:8px;
+}
+.topbar-time{
+  font-family:'DM Mono',monospace;
+  font-size:12px;color:rgba(255,255,255,0.6);
+}
+.deadline-tag{
+  background:rgba(201,168,76,0.2);
+  border:1px solid rgba(201,168,76,0.4);
+  border-radius:20px;
+  padding:3px 10px;
+  font-size:11px;font-weight:600;
+  color:var(--gold);
+  display:flex;align-items:center;gap:5px;
+}
+.deadline-dot{
+  width:5px;height:5px;background:var(--gold);border-radius:50%;
+  animation:blink 2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ── PROGRESS ───────────────────────────────────────────── */
+.progress-bar{
+  height:3px;background:rgba(201,168,76,0.3);
+}
+.progress-fill{
+  height:100%;background:var(--gold);
+  transition:width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── SHELL ──────────────────────────────────────────────── */
+.shell{
+  max-width:580px;margin:0 auto;
+  padding:20px 16px 80px;
+}
+
+/* ── PAGE DOTS ──────────────────────────────────────────── */
+.dots{
+  display:flex;justify-content:center;
+  gap:6px;margin-bottom:18px;
+}
+.dot{
+  height:6px;border-radius:3px;
+  background:var(--border);cursor:pointer;
+  transition:all 0.3s;width:6px;
+}
+.dot.active{background:var(--navy);width:24px;}
+.dot.done{background:var(--gold);opacity:0.6;}
+
+/* ── PAGE HEADER ────────────────────────────────────────── */
+.page-hd{
+  background:var(--navy);
+  border-radius:var(--radius) var(--radius) 0 0;
+  padding:24px 24px 20px;
+  position:relative;overflow:hidden;
+}
+.page-hd::after{
+  content:'';position:absolute;
+  top:-30px;right:-30px;
+  width:120px;height:120px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.04);
+}
+.page-hd.safety-hd{background:linear-gradient(135deg,#7F1D1D,#B91C1C)}
+.page-hd h2{
+  font-size:22px;font-weight:700;
+  color:#fff;letter-spacing:-0.02em;
+  margin-bottom:2px;
+}
+.page-hd .hd-sub{font-size:13px;color:rgba(255,255,255,0.6);font-style:italic}
+.page-hd .hd-note{
+  font-size:11px;color:rgba(255,255,255,0.45);
+  margin-top:10px;
+}
+
+/* ── CARDS ──────────────────────────────────────────────── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-top:none;
+  padding:20px;
+}
+.card:last-of-type{
+  border-radius:0 0 var(--radius) var(--radius);
+  border-bottom:1px solid var(--border);
+}
+.card+.card{border-top:1px solid var(--border)}
+
+/* ── LABELS ─────────────────────────────────────────────── */
+.lbl{
+  font-size:14px;font-weight:600;
+  color:var(--text);margin-bottom:2px;
+  display:flex;align-items:flex-start;gap:3px;
+}
+.lbl-sw{
+  font-size:12px;color:var(--muted);
+  font-style:italic;margin-bottom:10px;
+  line-height:1.4;
+}
+.req{color:var(--red);font-size:14px}
+
+/* ── INPUTS ─────────────────────────────────────────────── */
+input,select,textarea{
+  width:100%;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;
+  color:var(--text);
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  padding:11px 14px;
+  outline:none;
+  appearance:none;
+  -webkit-appearance:none;
+  transition:border-color 0.15s,box-shadow 0.15s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--navy);
+  box-shadow:0 0 0 3px rgba(15,35,64,0.08);
+}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748B' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  padding-right:36px;
+}
+
+/* ── CHOICE BUTTONS ─────────────────────────────────────── */
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.15s;
+  font-size:14px;
+  user-select:none;
+  background:#fff;
+}
+.choice:hover{border-color:var(--navy);background:var(--light)}
+.choice.sel{
+  border-color:var(--navy);
+  background:#EEF2F8;
+  font-weight:600;color:var(--navy);
+}
+.radio{
+  width:18px;height:18px;
+  border:2px solid var(--border);
+  border-radius:50%;flex-shrink:0;
+  transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;
+}
+.choice.sel .radio{border-color:var(--navy)}
+.choice.sel .radio::after{
+  content:'';
+  width:9px;height:9px;
+  background:var(--navy);border-radius:50%;
+}
+.choice-emoji{font-size:16px;flex-shrink:0}
+
+/* ── CHECKBOXES ─────────────────────────────────────────── */
+.checks{display:flex;flex-direction:column;gap:8px}
+.chk{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.15s;
+  font-size:14px;
+  user-select:none;
+  background:#fff;
+}
+.chk:hover{border-color:var(--navy);background:var(--light)}
+.chk.on{border-color:var(--navy);background:#EEF2F8;font-weight:600;color:var(--navy)}
+.chk-box{
+  width:18px;height:18px;
+  border:2px solid var(--border);
+  border-radius:4px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:#fff;
+  transition:all 0.15s;
+}
+.chk.on .chk-box{background:var(--navy);border-color:var(--navy)}
+
+/* ── COUNTER ────────────────────────────────────────────── */
+.counter-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.counter-box{
+  background:var(--light);
+  border:1.5px solid var(--border);
+  border-radius:8px;padding:12px 10px;
+  text-align:center;
+}
+.counter-lbl{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;line-height:1.3;text-transform:uppercase;letter-spacing:0.04em}
+.counter-ctrl{display:flex;align-items:center;justify-content:center;gap:8px}
+.cbtn{
+  width:30px;height:30px;
+  border-radius:50%;
+  border:1.5px solid var(--border);
+  background:#fff;
+  font-size:18px;font-weight:300;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text);
+  transition:all 0.15s;
+  line-height:1;
+}
+.cbtn:hover{border-color:var(--navy);color:var(--navy)}
+.cval{
+  font-family:'DM Mono',monospace;
+  font-size:22px;font-weight:500;
+  color:var(--navy);min-width:32px;
+  text-align:center;
+}
+
+/* ── RAG STATUS ─────────────────────────────────────────── */
+.rag{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.rag-btn{
+  padding:14px 8px;border:2px solid var(--border);
+  border-radius:8px;background:#fff;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;
+  cursor:pointer;transition:all 0.15s;
+  text-align:center;line-height:1.4;
+}
+.rag-btn small{display:block;font-size:10px;font-weight:400;opacity:0.7;margin-top:2px}
+.rag-btn.g.on{background:#ECFDF5;border-color:var(--green);color:var(--green)}
+.rag-btn.a.on{background:#FFFBEB;border-color:var(--amber);color:var(--amber)}
+.rag-btn.r.on{background:#FEF2F2;border-color:var(--red);color:var(--red)}
+.rag-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+
+/* ── SAFETY ─────────────────────────────────────────────── */
+.safety-item{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin-bottom:8px;
+  background:var(--light);
+}
+.safety-txt{flex:1;font-size:13px;line-height:1.4}
+.safety-sw-txt{font-size:11px;color:var(--muted);font-style:italic}
+.safety-btns{display:flex;gap:5px;flex-shrink:0}
+.sbtn{
+  padding:6px 10px;
+  border:1.5px solid var(--border);
+  border-radius:6px;
+  font-family:'DM Sans',sans-serif;
+  font-size:11px;font-weight:600;
+  cursor:pointer;background:#fff;
+  transition:all 0.12s;
+}
+.sbtn.y.on{background:#ECFDF5;border-color:var(--green);color:var(--green)}
+.sbtn.n.on{background:#FEF2F2;border-color:var(--red);color:var(--red)}
+.sbtn.na.on{background:var(--light);border-color:var(--navy);color:var(--navy)}
+
+/* ── PHOTO UPLOAD ───────────────────────────────────────── */
+.upload-area{
+  border:2px dashed var(--border);
+  border-radius:8px;padding:20px;
+  text-align:center;cursor:pointer;
+  transition:all 0.15s;background:var(--light);
+}
+.upload-area:hover{border-color:var(--navy);background:#EEF2F8}
+.upload-icon{font-size:28px;margin-bottom:6px}
+.upload-txt{font-size:13px;color:var(--muted)}
+.upload-txt strong{color:var(--navy);text-decoration:underline}
+.photo-preview{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;
+}
+.photo-thumb{
+  width:60px;height:60px;object-fit:cover;
+  border-radius:6px;border:2px solid var(--border);
+}
+
+/* ── DECLARATION BOX ────────────────────────────────────── */
+.declaration{
+  background:var(--light);
+  border-left:3px solid var(--gold);
+  border-radius:0 6px 6px 0;
+  padding:12px 16px;
+  font-size:12px;color:var(--muted);
+  font-style:italic;line-height:1.6;
+  margin-bottom:16px;
+}
+
+/* ── NAV BUTTONS ────────────────────────────────────────── */
+.nav{
+  display:flex;justify-content:space-between;
+  align-items:center;gap:10px;
+  margin-top:14px;
+}
+.btn-back{
+  padding:11px 22px;
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;
+  color:var(--muted);cursor:pointer;
+  transition:all 0.15s;
+}
+.btn-back:hover{border-color:var(--navy);color:var(--navy)}
+.btn-next{
+  padding:11px 28px;
+  background:var(--navy);
+  border:none;border-radius:8px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:600;
+  color:#fff;cursor:pointer;
+  transition:all 0.15s;
+  display:flex;align-items:center;gap:6px;
+}
+.btn-next:hover{background:var(--steel)}
+.btn-submit{
+  padding:13px 32px;
+  background:var(--gold);
+  border:none;border-radius:8px;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:700;
+  color:var(--navy);cursor:pointer;
+  transition:all 0.15s;
+  display:flex;align-items:center;gap:8px;
+}
+.btn-submit:hover{background:#D4A93A;transform:translateY(-1px);box-shadow:0 4px 12px rgba(201,168,76,0.4)}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.btn-submit.loading{background:#CCC;color:#666}
+
+/* ── SUCCESS SCREEN ─────────────────────────────────────── */
+.success{
+  display:none;
+  background:var(--card);
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  padding:52px 28px;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.success.show{display:block}
+.success-icon{font-size:56px;margin-bottom:20px}
+.success-title{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.7}
+.success-meta{
+  background:var(--light);border-radius:8px;
+  padding:16px;font-size:12px;color:var(--muted);
+  margin-bottom:20px;text-align:left;
+}
+.success-meta strong{color:var(--navy);display:block;margin-bottom:4px}
+.btn-again{
+  padding:10px 24px;background:var(--navy);
+  color:#fff;border:none;border-radius:8px;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;
+}
+
+/* ── ERROR MESSAGE ──────────────────────────────────────── */
+.error-msg{
+  background:#FEF2F2;border:1px solid #FCA5A5;
+  border-radius:8px;padding:12px 16px;
+  font-size:13px;color:var(--red);
+  margin-top:10px;display:none;
+}
+.error-msg.show{display:block}
+
+/* ── SETUP BANNER ───────────────────────────────────────── */
+.setup-banner{
+  background:linear-gradient(135deg,#1E3A5F,#2D5A8E);
+  border-radius:var(--radius);
+  padding:20px;
+  margin-bottom:16px;
+  color:#fff;
+}
+.setup-banner h3{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.setup-steps{display:flex;flex-direction:column;gap:8px}
+.setup-step{
+  display:flex;gap:10px;font-size:13px;
+  color:rgba(255,255,255,0.85);line-height:1.5;
+}
+.setup-step-num{
+  width:22px;height:22px;background:var(--gold);
+  border-radius:50%;color:var(--navy);
+  font-size:11px;font-weight:700;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.script-box{
+  background:rgba(0,0,0,0.3);border-radius:6px;
+  padding:12px;margin-top:12px;
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:#A8D5BA;line-height:1.8;
+  white-space:pre-wrap;word-break:break-all;
+  overflow-x:auto;
+}
+.copy-script-btn{
+  margin-top:10px;padding:8px 16px;
+  background:var(--gold);border:none;border-radius:6px;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:600;color:var(--navy);
+  cursor:pointer;transition:all 0.15s;
+}
+.copy-script-btn.done{background:#2D6A4F;color:#fff}
+
+/* ── SHEET URL INPUT ────────────────────────────────────── */
+.sheet-config{
+  background:var(--light);
+  border:1.5px solid var(--border);
+  border-radius:8px;padding:16px;
+  margin-bottom:14px;
+}
+.sheet-config label{
+  font-size:12px;font-weight:600;
+  color:var(--navy);display:block;margin-bottom:6px;
+}
+.sheet-config input{font-size:13px;padding:9px 12px}
+.sheet-config .hint{font-size:11px;color:var(--muted);margin-top:5px}
+.save-url-btn{
+  margin-top:8px;padding:8px 16px;
+  background:var(--navy);border:none;border-radius:6px;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:600;color:#fff;
+  cursor:pointer;
+}
+
+@media(max-width:480px){
+  .counter-grid{grid-template-columns:1fr}
+  .rag{grid-template-columns:1fr}
+  .safety-btns{flex-direction:column;gap:4px}
+  .page-hd{padding:18px 16px 14px}
+  .card{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="topbar-mark">BE</div>
+    <span class="topbar-name">Benchmark Engineering</span>
+  </div>
+  <div class="topbar-right">
+    <div class="deadline-tag">
+      <span class="deadline-dot"></span>
+      5:00 PM deadline
+    </div>
+  </div>
+</div>
+<div class="progress-bar">
+  <div class="progress-fill" id="progFill" style="width:0%"></div>
+</div>
+
+<div class="shell">
+
+<!-- DOTS -->
+<div class="dots" id="dots"></div>
+
+<!-- ══════════ FORM ══════════ -->
+<div id="formWrap">
+
+<!-- PAGE 1 — WHO & WHEN -->
+<div class="ms-page" id="p1">
+  <div class="page-hd">
+    <h2>Daily Site Diary</h2>
+    <div class="hd-sub">Diari ya Kila Siku ya Tovuti</div>
+    <div class="hd-note">★ = Required field / Sehemu inayohitajika</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Project <span class="req">★</span></div>
+    <div class="lbl-sw">Jina la Mradi</div>
+    <select id="f_project">
+      <option value="">Select project / Chagua mradi...</option>
+      <option>Zanzibar Regional Hospital — Block C</option>
+      <option>Pemba Primary School — Phase 2</option>
+      <option>Stone Town Office Complex</option>
+      <option>Unguja Government Housing — Lot 4</option>
+      <option>Pemba Health Centre</option>
+      <option>Other / Nyingine</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Date <span class="req">★</span></div>
+    <div class="lbl-sw">Tarehe</div>
+    <input type="date" id="f_date">
+  </div>
+
+  <div class="card">
+    <div class="lbl">Your Name <span class="req">★</span></div>
+    <div class="lbl-sw">Jina Lako</div>
+    <input type="text" id="f_engineer" placeholder="Full name / Jina kamili">
+  </div>
+
+  <div class="card">
+    <div class="lbl">People on site today</div>
+    <div class="lbl-sw">Watu kwenye tovuti leo</div>
+    <div class="counter-grid">
+      <div class="counter-box">
+        <div class="counter-lbl">Planned<br>Wanaotarajiwa</div>
+        <div class="counter-ctrl">
+          <button class="cbtn" onclick="adj('planned',-1)">−</button>
+          <span class="cval" id="c_planned">0</span>
+          <button class="cbtn" onclick="adj('planned',1)">+</button>
+        </div>
+      </div>
+      <div class="counter-box">
+        <div class="counter-lbl">Actual<br>Waliopo</div>
+        <div class="counter-ctrl">
+          <button class="cbtn" onclick="adj('actual',-1)">−</button>
+          <span class="cval" id="c_actual">0</span>
+          <button class="cbtn" onclick="adj('actual',1)">+</button>
+        </div>
+      </div>
+      <div class="counter-box">
+        <div class="counter-lbl">Avg Hours<br>Masaa ya kati</div>
+        <div class="counter-ctrl">
+          <button class="cbtn" onclick="adj('hours',-1)">−</button>
+          <span class="cval" id="c_hours">8</span>
+          <button class="cbtn" onclick="adj('hours',1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div></div>
+    <button class="btn-next" onclick="next(2)">Next → <span style="opacity:0.6;font-size:12px">Weather</span></button>
+  </div>
+</div>
+
+<!-- PAGE 2 — WEATHER & DELAYS -->
+<div class="ms-page" id="p2" style="display:none">
+  <div class="page-hd">
+    <h2>Weather & Delays</h2>
+    <div class="hd-sub">Hali ya Hewa na Ucheleweshaji</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Weather today</div>
+    <div class="lbl-sw">Hali ya hewa leo</div>
+    <div class="choices" id="wx_choices">
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">☀️</span>Clear / Sunny — Wazi / Jua</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">⛅</span>Partly Cloudy — Mawingu kidogo</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">☁️</span>Overcast — Mawingu mengi</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">🌧️</span>Light Rain — Mvua kidogo</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">⛈️</span>Heavy Rain — Mvua kubwa</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">🌩️</span>Storm — Dhoruba</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Did weather stop or slow work?</div>
+    <div class="lbl-sw">Je, hali ya hewa ilisimamisha au kupunguza kasi ya kazi?</div>
+    <div class="choices">
+      <div class="choice" onclick="pick(this,'wximpact');show('wxDetail')"><div class="radio"></div>Yes — Ndiyo</div>
+      <div class="choice" onclick="pick(this,'wximpact');hide('wxDetail')"><div class="radio"></div>No — Hapana</div>
+    </div>
+    <div id="wxDetail" style="display:none;margin-top:12px">
+      <textarea id="f_weatherDetail" placeholder="How long? What was affected? / Muda gani? Nini kiliathirika?"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Any delays today?</div>
+    <div class="lbl-sw">Ucheleweshaji wowote leo? — Weka tiki zote</div>
+    <div class="checks">
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Materials late or short — Vifaa vilichelewa / havikutosha</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Plant breakdown — Mitambo imevunjika</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Drawing / design issue — Tatizo la mchoro</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Subcontractor issue — Tatizo la mkandarasi</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Client instruction — Maagizo ya mteja</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>No delays — Hakuna ucheleweshaji</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Hours lost to delays</div>
+    <div class="lbl-sw">Masaa yaliyopotea — Ingiza 0 kama hakuna</div>
+    <input type="number" id="f_hoursLost" placeholder="0" min="0" step="0.5" style="max-width:140px">
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(1)">← Back</button>
+    <button class="btn-next" onclick="next(3)">Next → <span style="opacity:0.6;font-size:12px">Work</span></button>
+  </div>
+</div>
+
+<!-- PAGE 3 — WORK DONE -->
+<div class="ms-page" id="p3" style="display:none">
+  <div class="page-hd">
+    <h2>Work Done Today</h2>
+    <div class="hd-sub">Kazi Zilizofanywa Leo</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Describe the main work carried out <span class="req">★</span></div>
+    <div class="lbl-sw">Elezea kazi kuu zilizofanywa</div>
+    <textarea id="f_workDone" placeholder="e.g. Block C ground floor slab — poured 45m² concrete, grid A–D / Mfano: Sakafu ya chini Block C — kumwaga zege mita 45" style="min-height:110px"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Programme target met today? <span class="req">★</span></div>
+    <div class="lbl-sw">Je, lengo la mpango limetimizwa leo?</div>
+    <div class="choices">
+      <div class="choice" onclick="pick(this,'target');hide('targetDetail')"><div class="radio"></div>✅ Yes, on track — Ndiyo, kwenye ratiba</div>
+      <div class="choice" onclick="pick(this,'target');show('targetDetail')"><div class="radio"></div>⚠️ Partially — Sehemu tu</div>
+      <div class="choice" onclick="pick(this,'target');show('targetDetail')"><div class="radio"></div>❌ No, behind — Hapana, tumechelewa</div>
+    </div>
+    <div id="targetDetail" style="display:none;margin-top:12px">
+      <textarea id="f_targetNotes" placeholder="What was not completed and why? / Nini hakikukamilika na kwa nini?"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Overall programme status <span class="req">★</span></div>
+    <div class="lbl-sw">Hali ya jumla ya mpango</div>
+    <div class="rag">
+      <button class="rag-btn g" onclick="ragPick(this,'green')">✓ On Track<small>Kwenye Ratiba</small></button>
+      <button class="rag-btn a" onclick="ragPick(this,'amber')">⚠ At Risk<small>Iko Hatarini</small></button>
+      <button class="rag-btn r" onclick="ragPick(this,'red')">✗ Delayed<small>Imechelewa</small></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Plan for tomorrow</div>
+    <div class="lbl-sw">Mpango wa kesho</div>
+    <textarea id="f_tomorrow" placeholder="Key activities planned / Shughuli kuu zilizopangwa kwa kesho"></textarea>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(2)">← Back</button>
+    <button class="btn-next" onclick="next(4)">Next → <span style="opacity:0.6;font-size:12px">Safety</span></button>
+  </div>
+</div>
+
+<!-- PAGE 4 — SAFETY -->
+<div class="ms-page" id="p4" style="display:none">
+  <div class="page-hd safety-hd">
+    <h2>⚠ Safety Checks</h2>
+    <div class="hd-sub">Ukaguzi wa Usalama — all items required / vipengele vyote vinahitajika</div>
+  </div>
+
+  <div class="card">
+    <div id="safetyList"></div>
+    <div id="safetyDetail" style="display:none;margin-top:14px">
+      <div class="lbl" style="color:var(--red)">Describe the incident or concern <span class="req">★</span></div>
+      <div class="lbl-sw">Elezea tukio au wasiwasi</div>
+      <textarea id="f_safetyDetail" placeholder="What happened, who was involved, action taken / Nini kilitokea, nani alihusika, hatua zilizochukuliwa" style="min-height:100px"></textarea>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(3)">← Back</button>
+    <button class="btn-next" onclick="next(5)">Next → <span style="opacity:0.6;font-size:12px">Materials</span></button>
+  </div>
+</div>
+
+<!-- PAGE 5 — MATERIALS & PLANT -->
+<div class="ms-page" id="p5" style="display:none">
+  <div class="page-hd">
+    <h2>Materials & Plant</h2>
+    <div class="hd-sub">Vifaa na Mitambo</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Materials delivered today</div>
+    <div class="lbl-sw">Vifaa vilivyoletwa leo — Andika HAKUNA kama hakuna</div>
+    <textarea id="f_materials" placeholder="What · How much · Supplier&#10;e.g. Cement — 50 bags — Ali Traders&#10;Write NONE if nothing / Andika HAKUNA kama hakuna"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Plant & equipment on site</div>
+    <div class="lbl-sw">Mitambo kwenye tovuti — Andika HAKUNA kama hakuna</div>
+    <textarea id="f_plant" placeholder="e.g. Concrete mixer — working — 6hrs&#10;Water pump — broken — reported to PM&#10;Write NONE if nothing / Andika HAKUNA kama hakuna"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Any instructions received today?</div>
+    <div class="lbl-sw">Je, maagizo yoyote yalipokelewa leo?</div>
+    <div class="choices">
+      <div class="choice" onclick="pick(this,'instr');show('instrDetail')"><div class="radio"></div>Yes — Ndiyo</div>
+      <div class="choice" onclick="pick(this,'instr');hide('instrDetail')"><div class="radio"></div>No — Hapana</div>
+    </div>
+    <div id="instrDetail" style="display:none;margin-top:12px">
+      <textarea id="f_instructions" placeholder="What was the instruction and who gave it? / Maagizo yalikuwa nini na nani aliyatoa?"></textarea>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(4)">← Back</button>
+    <button class="btn-next" onclick="next(6)">Next → <span style="opacity:0.6;font-size:12px">Sign off</span></button>
+  </div>
+</div>
+
+<!-- PAGE 6 — SIGN OFF -->
+<div class="ms-page" id="p6" style="display:none">
+  <div class="page-hd">
+    <h2>Sign Off</h2>
+    <div class="hd-sub">Uthibitisho wa Mwisho</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Site photos (optional)</div>
+    <div class="lbl-sw">Picha za tovuti — si lazima, upeo 5</div>
+    <div class="upload-area" onclick="document.getElementById('photoIn').click()">
+      <div class="upload-icon">📷</div>
+      <div class="upload-txt"><strong>Tap to add photos</strong> from camera or gallery<br><em>Gusa kuongeza picha kutoka kamera au gallery</em></div>
+      <input type="file" id="photoIn" accept="image/*" multiple style="display:none" onchange="showPreviews(this)">
+    </div>
+    <div class="photo-preview" id="photoPrev"></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Anything else to report?</div>
+    <div class="lbl-sw">Kuna kingine chochote cha kuripoti?</div>
+    <textarea id="f_otherNotes" placeholder="Visitors, client comments, unusual events / Wageni, maoni ya mteja, matukio ya ajabu"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="declaration">
+      "I confirm this is a true and accurate record of today's site activity."<br>
+      <em>"Ninathibitisha kwamba hii ni rekodi ya kweli na sahihi ya shughuli za tovuti za leo."</em>
+    </div>
+    <div class="lbl">Your name to submit <span class="req">★</span></div>
+    <div class="lbl-sw">Jina lako — sahihi ya kidijitali</div>
+    <input type="text" id="f_signName" placeholder="Type your full name / Andika jina lako kamili">
+
+    <div class="error-msg" id="errMsg">Please complete all required fields before submitting.<br><em>Tafadhali jaza nyanja zote zinazohitajika kabla ya kutuma.</em></div>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(5)">← Back</button>
+    <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+      <span id="submitTxt">Submit Diary ✓</span>
+    </button>
+  </div>
+</div>
+
+</div><!-- formWrap -->
+
+<!-- SUCCESS SCREEN -->
+<div class="success" id="successScreen">
+  <div class="success-icon">✅</div>
+  <div class="success-title">Diary Submitted!</div>
+  <div class="success-sub">
+    Your site diary has been recorded in the project spreadsheet.<br>
+    The Project Manager has been notified automatically.<br><br>
+    <em>Diari yako imerekodiwa kwenye jedwali la mradi. Meneja wa Mradi amearifu moja kwa moja.</em>
+  </div>
+  <div class="success-meta" id="successMeta"></div>
+  <button class="btn-again" onclick="location.reload()">Submit another / Wasilisha nyingine</button>
+</div>
+
+</div><!-- shell -->
+
+<script>
+// ── STATE ──────────────────────────────────────────────────
+let cur = 1;
+const TOTAL = 6;
+const counts = { planned:0, actual:0, hours:8 };
+let selectedWx = '';
+let selectedTarget = '';
+let selectedProg = '';
+let selectedInstr = '';
+let selectedWxImpact = '';
+let safetyAnswers = {};
+let SHEET_URL = localStorage.getItem('BEL_SHEET_URL') || '';
+
+// ── INIT ───────────────────────────────────────────────────
+document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
+
+// Sheet URL loaded from localStorage
+if (SHEET_URL) {
+  console.log('Google Sheet connected.');
+}
+
+// Build dots
+const dotsEl = document.getElementById('dots');
+for (let i = 1; i <= TOTAL; i++) {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 1 ? ' active' : '');
+  d.id = 'dot' + i;
+  d.onclick = () => next(i);
+  dotsEl.appendChild(d);
+}
+updateProg();
+
+// Build safety items
+const safetyData = [
+  ["Toolbox talk done today?", "Je, mazungumzo ya zana yalifanyika leo?", "toolbox"],
+  ["All new workers inducted?", "Je, wafanyakazi wapya wote waliingizwa?", "inducted"],
+  ["PPE worn correctly by everyone?", "Je, kila mtu amevaa vifaa vya kinga vizuri?", "ppe"],
+  ["Any near misses?", "Je, kulikuwa na ajali karibu yoyote?", "nearmiss"],
+  ["Any accidents or incidents?", "Je, kulikuwa na ajali yoyote?", "accident"],
+  ["Site clean and tidy?", "Je, tovuti ni safi na nadhifu?", "tidy"],
+];
+const sl = document.getElementById('safetyList');
+safetyData.forEach(([en, sw, key]) => {
+  const div = document.createElement('div');
+  div.className = 'safety-item';
+  div.innerHTML = `
+    <div class="safety-txt">${en}<br><span class="safety-sw-txt">${sw}</span></div>
+    <div class="safety-btns">
+      <button class="sbtn y" onclick="sPick(this,'yes','${key}')">Yes</button>
+      <button class="sbtn n" onclick="sPick(this,'no','${key}')">No</button>
+      <button class="sbtn na" onclick="sPick(this,'na','${key}')">N/A</button>
+    </div>`;
+  sl.appendChild(div);
+});
+
+// ── FUNCTIONS ──────────────────────────────────────────────
+function next(n) {
+  document.getElementById('p' + cur).style.display = 'none';
+  document.getElementById('dot' + cur).classList.remove('active');
+  if (n < cur) document.getElementById('dot' + (cur)).classList.remove('done');
+  document.getElementById('dot' + cur).classList.add('done');
+  cur = n;
+  document.getElementById('p' + cur).style.display = 'block';
+  document.getElementById('dot' + cur).classList.remove('done');
+  document.getElementById('dot' + cur).classList.add('active');
+  updateProg();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProg() {
+  const pct = Math.round(((cur - 1) / TOTAL) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+}
+
+function pick(el, group) {
+  el.closest('.choices').querySelectorAll('.choice').forEach(i => i.classList.remove('sel'));
+  el.classList.add('sel');
+  if (group === 'wx') selectedWx = el.textContent.trim().split('—')[0].trim();
+  if (group === 'target') selectedTarget = el.textContent.trim();
+  if (group === 'wximpact') selectedWxImpact = el.textContent.trim();
+  if (group === 'instr') selectedInstr = el.textContent.trim();
+}
+
+function chk(el) {
+  el.classList.toggle('on');
+  el.querySelector('.chk-box').textContent = el.classList.contains('on') ? '✓' : '';
+}
+
+function ragPick(btn, color) {
+  btn.closest('.rag').querySelectorAll('.rag-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  selectedProg = btn.textContent.trim().split('\n')[0];
+}
+
+function sPick(btn, val, key) {
+  btn.closest('.safety-btns').querySelectorAll('.sbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  safetyAnswers[key] = val;
+  const anyYes = Object.values(safetyAnswers).includes('yes');
+  document.getElementById('safetyDetail').style.display = anyYes ? 'block' : 'none';
+}
+
+function adj(field, delta) {
+  counts[field] = Math.max(0, counts[field] + delta);
+  document.getElementById('c_' + field).textContent = counts[field];
+}
+
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+function showPreviews(input) {
+  const prev = document.getElementById('photoPrev');
+  prev.innerHTML = '';
+  [...input.files].slice(0, 5).forEach(f => {
+    const img = document.createElement('img');
+    img.className = 'photo-thumb';
+    img.src = URL.createObjectURL(f);
+    prev.appendChild(img);
+  });
+}
+
+function getDelays() {
+  return [...document.querySelectorAll('.chk.on')].map(c => c.textContent.trim().split('—')[0].trim()).join(', ') || 'None';
+}
+
+function getSafetyIssues() {
+  return Object.entries(safetyAnswers)
+    .filter(([k, v]) => v === 'yes')
+    .map(([k]) => k).join(', ') || 'None';
+}
+
+// ── SETUP ─────────────────────────────────────────────────
+function saveUrl() {
+  const url = document.getElementById('sheetUrl').value.trim();
+  if (!url || !url.includes('script.google.com')) {
+    alert('Please paste a valid Google Apps Script URL.\nTafadhali weka URL sahihi ya Google Apps Script.');
+    return;
+  }
+  SHEET_URL = url;
+  localStorage.setItem('BEL_SHEET_URL', url);
+  document.getElementById('setupGuide').style.display = 'none';
+  alert('✓ Connected! The form will now save to your Google Sheet.\n✓ Imeunganishwa! Fomu sasa itahifadhi kwenye Google Sheet yako.');
+}
+
+function copyScript() {
+  const text = document.getElementById('scriptCode').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyScriptBtn');
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('done');
+    setTimeout(() => { btn.textContent = '⎘ Copy Script'; btn.classList.remove('done'); }, 3000);
+  });
+}
+
+// ── SUBMIT ─────────────────────────────────────────────────
+async function submitForm() {
+  const proj = document.getElementById('f_project').value;
+  const date = document.getElementById('f_date').value;
+  const engineer = document.getElementById('f_engineer').value.trim();
+  const workDone = document.getElementById('f_workDone').value.trim();
+  const signName = document.getElementById('f_signName').value.trim();
+  const errMsg = document.getElementById('errMsg');
+
+  if (!proj || !date || !engineer || !workDone || !signName) {
+    errMsg.classList.add('show');
+    return;
+  }
+  errMsg.classList.remove('show');
+
+  const submitBtn = document.getElementById('submitBtn');
+  const submitTxt = document.getElementById('submitTxt');
+  submitBtn.disabled = true;
+  submitTxt.textContent = 'Submitting...';
+
+  const data = {
+    project: proj,
+    date: date,
+    engineer: engineer,
+    planned: counts.planned,
+    actual: counts.actual,
+    hours: counts.hours,
+    weather: selectedWx || 'Not specified',
+    weatherImpact: selectedWxImpact || 'Not answered',
+    weatherDetail: document.getElementById('f_weatherDetail').value,
+    delays: getDelays(),
+    hoursLost: document.getElementById('f_hoursLost').value || '0',
+    workDone: workDone,
+    progStatus: selectedProg || 'Not specified',
+    targetMet: selectedTarget || 'Not answered',
+    targetNotes: document.getElementById('f_targetNotes')?.value || '',
+    tomorrow: document.getElementById('f_tomorrow').value,
+    safetyIssues: getSafetyIssues(),
+    safetyDetail: document.getElementById('f_safetyDetail').value || '',
+    materials: document.getElementById('f_materials').value || 'None',
+    plant: document.getElementById('f_plant').value || 'None',
+    instructions: document.getElementById('f_instructions')?.value || 'None',
+    otherNotes: document.getElementById('f_otherNotes').value || '',
+    signName: signName,
+  };
+
+  // Submit to Google Sheets via URL params
+  if (SHEET_URL) {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(data).forEach(([k, v]) => params.append(k, String(v)));
+      const reqUrl = SHEET_URL + "?" + params.toString();
+      await fetch(reqUrl, {
+        method: "GET",
+        mode: 'no-cors',
+      });
+    } catch (err) {
+      console.log('Fetch note:', err);
+    }
+  }
+
+  // Show success
+  document.getElementById('formWrap').style.display = 'none';
+  document.getElementById('dots').style.display = 'none';
+  document.getElementById('progFill').style.width = '100%';
+  const d = date ? new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
+  document.getElementById('successMeta').innerHTML = `
+    <strong>${proj}</strong>
+    ${d}<br>
+    Engineer: ${engineer}<br>
+    Workers: ${counts.actual} on site (${counts.planned} planned)<br>
+    Programme: ${selectedProg || '—'}<br>
+    Submitted by: ${signName}`;
+  document.getElementById('successScreen').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

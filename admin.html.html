@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BEL — Admin Setup</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0B1F3A;--steel:#1A4A7A;--gold:#C9A84C;
+  --green:#1A5C35;--red:#991B1B;
+  --bg:#F1F4F8;--card:#fff;--border:#D8E0EA;
+  --text:#0F1923;--muted:#64748B;--light:#EEF2F7;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+.topbar{background:var(--navy);padding:0 24px;height:52px;display:flex;align-items:center;gap:12px}
+.tb-mark{width:32px;height:32px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--navy)}
+.tb-title{color:#fff;font-size:14px;font-weight:600}
+.tb-badge{background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.35);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--gold);margin-left:8px}
+
+.shell{max-width:680px;margin:0 auto;padding:32px 20px}
+
+.admin-header{margin-bottom:28px}
+.admin-header h1{font-size:24px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.admin-header p{font-size:13px;color:var(--muted);line-height:1.6}
+
+.section{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.section-hd{background:var(--navy);padding:14px 20px;color:#fff}
+.section-hd h2{font-size:14px;font-weight:600;margin-bottom:2px}
+.section-hd p{font-size:11px;opacity:0.6}
+.section-body{padding:20px}
+
+/* Status indicator */
+.status-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:500}
+.status-row.connected{background:#ECFDF5;border:1px solid #6EE7B7;color:var(--green)}
+.status-row.disconnected{background:#FEF2F2;border:1px solid #FCA5A5;color:var(--red)}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.connected .status-dot{background:var(--green)}
+.disconnected .status-dot{background:var(--red)}
+
+/* Input */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+.field input,.field textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;background:#fff;transition:border-color 0.15s}
+.field input:focus,.field textarea:focus{border-color:var(--navy)}
+.field .hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5}
+
+/* Script box */
+.script-wrap{position:relative}
+.script-box{background:#0F1923;border-radius:8px;padding:16px;font-family:'DM Mono',monospace;font-size:11px;color:#A8D5BA;line-height:1.8;white-space:pre-wrap;word-break:break-all;max-height:320px;overflow-y:auto;margin-bottom:10px}
+.copy-btn{padding:8px 18px;background:var(--gold);border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;transition:all 0.15s}
+.copy-btn:hover{background:#D4A93A}
+.copy-btn.done{background:var(--green);color:#fff}
+
+/* Save button */
+.save-btn{padding:12px 28px;background:var(--navy);border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:#fff;cursor:pointer;transition:all 0.15s;width:100%}
+.save-btn:hover{background:var(--steel)}
+.save-btn.saved{background:var(--green)}
+
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.step{display:flex;gap:12px;font-size:13px;color:var(--text);line-height:1.5}
+.step-num{width:24px;height:24px;background:var(--navy);border-radius:50%;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px}
+
+/* Links */
+.link-row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.link-btn{padding:10px 18px;background:var(--light);border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--navy);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s}
+.link-btn:hover{border-color:var(--navy);background:#E2E8F0}
+.link-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.link-btn.primary:hover{background:var(--steel)}
+
+.divider{height:1px;background:var(--border);margin:16px 0}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-mark">BE</div>
+  <span class="tb-title">Benchmark Engineering</span>
+  <span class="tb-badge">Admin Setup</span>
+</div>
+
+<div class="shell">
+
+  <div class="admin-header">
+    <h1>System Configuration</h1>
+    <p>This page is for the administrator only. Site engineers never see this — they only use the diary form. Configure your Google Sheets connection here once and it's done.</p>
+  </div>
+
+  <!-- CONNECTION STATUS -->
+  <div class="section">
+    <div class="section-hd"><h2>Connection Status</h2><p>Google Sheets integration</p></div>
+    <div class="section-body">
+      <div id="statusRow" class="status-row disconnected">
+        <div class="status-dot"></div>
+        <span id="statusText">Not connected — no Google Sheets URL saved</span>
+      </div>
+      <div id="currentUrl" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);word-break:break-all;display:none"></div>
+      <div class="link-row">
+        <a id="formLink" href="index.html" class="link-btn primary" target="_blank">📋 Open Engineer Form</a>
+        <a id="ceoLink" href="ceo.html" class="link-btn" target="_blank">📊 Open CEO Dashboard</a>
+        <button class="link-btn" onclick="clearAll()" style="color:var(--red);border-color:#FCA5A5">🗑 Clear saved URLs</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1: APPS SCRIPT -->
+  <div class="section">
+    <div class="section-hd"><h2>Step 1 — Set up Google Apps Script</h2><p>Paste this script into your Google Sheet to receive form submissions</p></div>
+    <div class="section-body">
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div>Open your <strong>BEL Daily Diary</strong> Google Sheet</div></div>
+        <div class="step"><div class="step-num">2</div><div>Click <strong>Extensions → Apps Script</strong></div></div>
+        <div class="step"><div class="step-num">3</div><div>Delete all existing code and paste the script below</div></div>
+        <div class="step"><div class="step-num">4</div><div>Click <strong>Save</strong> → then <strong>Deploy → New deployment → Web app</strong> → set access to <strong>Anyone</strong> → click <strong>Deploy</strong></div></div>
+        <div class="step"><div class="step-num">5</div><div>When prompted, click <strong>Advanced → Go to project (unsafe) → Allow</strong></div></div>
+        <div class="step"><div class="step-num">6</div><div>Copy the <strong>Web App URL</strong> and paste it into Step 2 below</div></div>
+      </div>
+
+      <div class="script-box" id="scriptText">// BENCHMARK ENGINEERING — DAILY SITE DIARY
+// Google Apps Script — reads URL parameters (GET request)
+
+function doGet(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var p = e.parameter;
+
+    // Add headers if sheet is empty
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        'Timestamp','Project','Date','Engineer',
+        'Planned Workers','Actual Workers','Hours Worked',
+        'Weather','Weather Impact','Weather Detail',
+        'Delays','Hours Lost',
+        'Work Done','Programme Status','Target Met','Target Notes',
+        'Tomorrow Plan',
+        'Safety Issues','Safety Detail',
+        'Materials','Plant',
+        'Instructions','Other Notes','Sign-Off Name'
+      ]);
+    }
+
+    sheet.appendRow([
+      new Date().toLocaleString(),
+      p.project||'', p.date||'', p.engineer||'',
+      p.planned||0, p.actual||0, p.hours||0,
+      p.weather||'', p.weatherImpact||'', p.weatherDetail||'',
+      p.delays||'', p.hoursLost||0,
+      p.workDone||'', p.progStatus||'', p.targetMet||'', p.targetNotes||'',
+      p.tomorrow||'',
+      p.safetyIssues||'', p.safetyDetail||'',
+      p.materials||'', p.plant||'',
+      p.instructions||'', p.otherNotes||'', p.signName||''
+    ]);
+
+    return ContentService
+      .createTextOutput('OK')
+      .setMimeType(ContentService.MimeType.TEXT);
+
+  } catch(err) {
+    return ContentService
+      .createTextOutput('ERROR: ' + err.toString())
+      .setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
+function doPost(e) {
+  return doGet(e);
+}</div>
+      <button class="copy-btn" id="copyScriptBtn" onclick="copyScript()">⎘ Copy Script</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: FORM URL -->
+  <div class="section">
+    <div class="section-hd"><h2>Step 2 — Connect the Engineer Form</h2><p>Paste the Apps Script Web App URL so the diary form can save to Google Sheets</p></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Google Apps Script Web App URL</label>
+        <input type="text" id="formSheetUrl" placeholder="https://script.google.com/macros/s/...">
+        <div class="hint">Get this from: Apps Script → Deploy → Manage deployments → copy the Web App URL</div>
+      </div>
+      <button class="save-btn" id="saveFormBtn" onclick="saveFormUrl()">Save Form Connection</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: CEO DASHBOARD -->
+  <div class="section">
+    <div class="section-hd"><h2>Step 3 — Connect the CEO Dashboard</h2><p>Publish your Google Sheet as CSV so the CEO dashboard can read submissions</p></div>
+    <div class="section-body">
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div>Open your <strong>BEL Daily Diary</strong> Google Sheet</div></div>
+        <div class="step"><div class="step-num">2</div><div>Click <strong>File → Share → Publish to web</strong></div></div>
+        <div class="step"><div class="step-num">3</div><div>Set first dropdown to <strong>Sheet1</strong>, second to <strong>Comma-separated values (.csv)</strong></div></div>
+        <div class="step"><div class="step-num">4</div><div>Click <strong>Publish</strong> → copy the URL → paste below</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>Google Sheet CSV Publish URL</label>
+        <input type="text" id="ceoSheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+        <div class="hint">This lets the CEO dashboard read submissions without editing the sheet</div>
+      </div>
+      <button class="save-btn" id="saveCeoBtn" onclick="saveCeoUrl()">Save CEO Dashboard Connection</button>
+    </div>
+  </div>
+
+  <!-- QUICK LINKS -->
+  <div class="section">
+    <div class="section-hd"><h2>Quick Links</h2><p>Share these with your team</p></div>
+    <div class="section-body">
+      <div class="field">
+        <label>Engineer Form URL — share via WhatsApp</label>
+        <input type="text" id="formUrlDisplay" readonly style="background:var(--light);color:var(--navy);font-family:'DM Mono',monospace;font-size:12px" placeholder="Your Netlify URL / index.html">
+      </div>
+      <div class="field">
+        <label>CEO Dashboard URL — share with CEO only</label>
+        <input type="text" id="ceoUrlDisplay" readonly style="background:var(--light);color:var(--navy);font-family:'DM Mono',monospace;font-size:12px" placeholder="Your Netlify URL / ceo.html">
+      </div>
+      <button class="copy-btn" onclick="copyLinks()">⎘ Copy both links</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const FORM_KEY = 'BEL_SHEET_URL';
+const CEO_KEY  = 'BEL_CEO_SHEET';
+
+// Load saved values
+const savedForm = localStorage.getItem(FORM_KEY) || '';
+const savedCeo  = localStorage.getItem(CEO_KEY)  || '';
+
+if(savedForm) document.getElementById('formSheetUrl').value = savedForm;
+if(savedCeo)  document.getElementById('ceoSheetUrl').value  = savedCeo;
+
+// Set URL displays — use actual live URL not local file path
+function getBaseUrl() {
+  const href = window.location.href;
+  // If running locally, show placeholder
+  if(href.startsWith('file://')) {
+    return 'https://benchmarksitediaries.netlify.app/';
+  }
+  // Strip admin.html from end
+  return href.replace(/admin\.html.*$/, '').replace(/\/+$/, '') + '/';
+}
+const base = getBaseUrl();
+document.getElementById('formUrlDisplay').value = base + 'index.html';
+document.getElementById('ceoUrlDisplay').value  = base + 'ceo.html';
+
+// Update status
+function updateStatus(){
+  const row  = document.getElementById('statusRow');
+  const text = document.getElementById('statusText');
+  const urlEl = document.getElementById('currentUrl');
+  const form = localStorage.getItem(FORM_KEY);
+  if(form){
+    row.className = 'status-row connected';
+    text.textContent = '✓ Connected — submissions saving to Google Sheets';
+    urlEl.style.display = 'block';
+    urlEl.textContent = 'URL: ' + form;
+  } else {
+    row.className = 'status-row disconnected';
+    text.textContent = 'Not connected — complete Steps 1 and 2 below';
+    urlEl.style.display = 'none';
+  }
+}
+updateStatus();
+
+// Update nav links to use correct base URL
+document.getElementById('formLink').href = base + 'index.html';
+document.getElementById('ceoLink').href  = base + 'ceo.html';
+
+function saveFormUrl(){
+  const url = document.getElementById('formSheetUrl').value.trim();
+  if(!url || !url.includes('script.google.com')){
+    alert('Please paste a valid Google Apps Script Web App URL.');
+    return;
+  }
+  localStorage.setItem(FORM_KEY, url);
+  const btn = document.getElementById('saveFormBtn');
+  btn.textContent = '✓ Saved!';
+  btn.classList.add('saved');
+  setTimeout(()=>{ btn.textContent='Save Form Connection'; btn.classList.remove('saved'); }, 3000);
+  updateStatus();
+}
+
+function saveCeoUrl(){
+  const url = document.getElementById('ceoSheetUrl').value.trim();
+  if(!url || !url.includes('docs.google.com')){
+    alert('Please paste a valid Google Sheets publish URL.');
+    return;
+  }
+  localStorage.setItem(CEO_KEY, url);
+  const btn = document.getElementById('saveCeoBtn');
+  btn.textContent = '✓ Saved!';
+  btn.classList.add('saved');
+  setTimeout(()=>{ btn.textContent='Save CEO Dashboard Connection'; btn.classList.remove('saved'); }, 3000);
+}
+
+function copyScript(){
+  const text = document.getElementById('scriptText').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById('copyScriptBtn');
+    btn.textContent='✓ Copied!'; btn.classList.add('done');
+    setTimeout(()=>{ btn.textContent='⎘ Copy Script'; btn.classList.remove('done'); },3000);
+  });
+}
+
+function copyLinks(){
+  const f = document.getElementById('formUrlDisplay').value;
+  const c = document.getElementById('ceoUrlDisplay').value;
+  navigator.clipboard.writeText('Engineer form: ' + f + '\nCEO dashboard: ' + c);
+  alert('Both links copied to clipboard');
+}
+
+function clearAll(){
+  if(confirm('Clear all saved URLs? You will need to reconnect everything.')){
+    localStorage.removeItem(FORM_KEY);
+    localStorage.removeItem(CEO_KEY);
+    location.reload();
+  }
+}
+</script>
+</body>
+</html>
