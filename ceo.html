@@ -471,13 +471,13 @@ setInterval(updateClock, 1000);
 // ── STATE ──────────────────────────────────────────────────
 let allReports = [];
 let activeFilter = 'all';
-let SHEET_CSV = localStorage.getItem('BEL_CEO_SHEET') || '';
+// Hardcoded CSV URL — works on every device automatically
+const HARDCODED_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTS17qI7XxT_8dNh_h-L55ettk2nhbYAB4ECHMcEiHDIZnTHY1sxHUkg8AYb9rGotPrMQDGU_gH1fCK/pub?gid=0&single=true&output=csv';
+let SHEET_CSV = HARDCODED_CSV;
 
-if (SHEET_CSV) {
-  document.getElementById('sheetCsvUrl').value = SHEET_CSV;
-  document.getElementById('setupCard').style.display = 'none';
-  loadData();
-}
+// Hide setup card — not needed anymore
+document.getElementById('setupCard').style.display = 'none';
+loadData();
 
 // ── CONNECT SHEET ──────────────────────────────────────────
 function connectSheet(){
