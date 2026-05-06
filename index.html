@@ -509,7 +509,7 @@ select{
   <div class="topbar-right">
     <div class="deadline-tag">
       <span class="deadline-dot"></span>
-      5:00 PM deadline
+      7:00 PM · Saa moja usiku
     </div>
   </div>
 </div>
@@ -537,13 +537,24 @@ select{
     <div class="lbl">Project <span class="req">★</span></div>
     <div class="lbl-sw">Jina la Mradi</div>
     <select id="f_project">
-      <option value="">Select project / Chagua mradi...</option>
-      <option>Zanzibar Regional Hospital — Block C</option>
-      <option>Pemba Primary School — Phase 2</option>
-      <option>Stone Town Office Complex</option>
-      <option>Unguja Government Housing — Lot 4</option>
-      <option>Pemba Health Centre</option>
-      <option>Other / Nyingine</option>
+      <option value="">Chagua mradi / Select project...</option>
+      <option>566 Stone Town</option>
+      <option>Morogoro Hotel</option>
+      <option>Chonga Health Center</option>
+      <option>Bwekunduni Market</option>
+      <option>Rose House Chukwani</option>
+      <option>Jadida School</option>
+      <option>Matemwe Market</option>
+      <option>ZFDA Chamanangwe</option>
+      <option>Ashuu Buyu</option>
+      <option>Zainab Chukwani</option>
+      <option>Aluwiya Chukwani</option>
+      <option>Mbarouk Kibondeni</option>
+      <option>Huda Kisauni</option>
+      <option>Issam Chukwani</option>
+      <option>Fatma Kidishi Kwerekwe</option>
+      <option>Fatma Abdallah Tunguu</option>
+      <option>Nyingine / Other</option>
     </select>
   </div>
 
@@ -785,7 +796,12 @@ select{
   </div>
 
   <div class="card">
-    <div class="declaration">
+    <div id="installPrompt" style="display:none;background:#EEF2F8;border:1.5px solid #1A4A7A;border-radius:8px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;color:#0F1923;margin-bottom:4px">Add to home screen / Ongeza kwenye skrini ya nyumbani</div>
+      <div style="font-size:12px;color:#64748B;line-height:1.6">Open with one tap every day. No link needed after this.<br><em>Fungua kwa kubonyeza mara moja kila siku. Hakuna kiungo kinachohitajika baada ya hii.</em></div>
+      <div style="font-size:11px;color:#64748B;margin-top:8px">iPhone: Share button then Add to Home Screen &nbsp;|&nbsp; Android: Menu then Add to Home Screen</div>
+    </div>
+        <div class="declaration">
       "I confirm this is a true and accurate record of today's site activity."<br>
       <em>"Ninathibitisha kwamba hii ni rekodi ya kweli na sahihi ya shughuli za tovuti za leo."</em>
     </div>
@@ -887,6 +903,7 @@ function next(n) {
   document.getElementById('dot' + cur).classList.remove('done');
   document.getElementById('dot' + cur).classList.add('active');
   updateProg();
+  if (cur === 6) showInstallPrompt();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1040,7 +1057,9 @@ async function submitForm() {
   document.getElementById('formWrap').style.display = 'none';
   document.getElementById('dots').style.display = 'none';
   document.getElementById('progFill').style.width = '100%';
-  const d = date ? new Date(date + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
+  const _d = date ? new Date(date + 'T12:00:00') : null;
+  const d = _d ? _d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
+  const dSw = _d ? _d.toLocaleDateString('sw', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
   document.getElementById('successMeta').innerHTML = `
     <strong>${proj}</strong>
     ${d}<br>
@@ -1051,6 +1070,48 @@ async function submitForm() {
   document.getElementById('successScreen').classList.add('show');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// NOTIFICATIONS & REMINDERS
+async function requestNotifications() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') scheduleReminder();
+  } else if (Notification.permission === 'granted') {
+    scheduleReminder();
+  }
+}
+
+function scheduleReminder() {
+  const now = new Date();
+  const r1 = new Date(); r1.setHours(18,30,0,0);
+  const r2 = new Date(); r2.setHours(19,0,0,0);
+  const ms1 = r1 - now;
+  const ms2 = r2 - now;
+  if (ms1 > 0) {
+    setTimeout(() => {
+      new Notification('Benchmark Engineering', {
+        body: 'Diari inahitajika kwa dakika 30! / Diary due in 30 minutes!',
+        tag: 'bel-reminder'
+      });
+    }, ms1);
+  }
+  if (ms2 > 0) {
+    setTimeout(() => {
+      new Notification('Benchmark Engineering - DEADLINE', {
+        body: 'Saa moja usiku! Tuma diari yako sasa! / 7PM deadline - submit now!',
+        tag: 'bel-deadline'
+      });
+    }, ms2);
+  }
+}
+
+function showInstallPrompt() {
+  const el = document.getElementById('installPrompt');
+  if (el) el.style.display = 'block';
+}
+
+requestNotifications();
+
 </script>
 </body>
 </html>
