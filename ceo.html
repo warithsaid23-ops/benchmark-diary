@@ -477,7 +477,7 @@ let SHEET_CSV = HARDCODED_CSV;
 
 // Hide setup card — not needed anymore
 document.getElementById('setupCard').style.display = 'none';
-loadData();
+loadData().then(() => updateLastRefreshed());
 
 // ── CONNECT SHEET ──────────────────────────────────────────
 function connectSheet(){
@@ -499,27 +499,27 @@ async function loadData(){
   document.getElementById('reportsArea').innerHTML = '<div class="loading"><div class="spinner"></div> Loading submissions...</div>';
 
   if(!SHEET_CSV){
-    document.getElementById('reportsArea').innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><div class="empty-title">Sheet not connected</div><div class="empty-sub">Paste your Google Sheet CSV URL above and click Connect.</div></div>`;
+    document.getElementById('reportsArea').innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><div class="empty-title">Sheet not connected</div><div class="empty-sub">Connect your sheet via the admin page.</div></div>`;
     btn.classList.remove('spinning');
     return;
   }
 
   try {
-    // Try multiple CORS proxies
+    // Direct fetch — works because Google Sheets CSV is CORS-enabled when published
     let csv = null;
-    const proxies = [
+    const attempts = [
+      SHEET_CSV,
       'https://corsproxy.io/?' + encodeURIComponent(SHEET_CSV),
       'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEET_CSV),
-      'https://proxy.cors.sh/' + SHEET_CSV,
     ];
     
-    for (const proxyUrl of proxies) {
+    for (const url of attempts) {
       try {
-        const res = await fetch(proxyUrl, {headers: {'x-cors-api-key': 'temp_' + Date.now()}});
+        const res = await fetch(url, {cache: 'no-store'});
         if (res.ok) { csv = await res.text(); break; }
       } catch(e) { continue; }
     }
-    if (!csv) throw new Error('All proxies failed — check your sheet is published as CSV');
+    if (!csv) throw new Error('Could not load data. Check your sheet is published as CSV (File → Share → Publish to web → CSV)');
     allReports = parseCSV(csv);
     renderStats();
     renderReports(allReports);
@@ -805,7 +805,22 @@ function copyReport(idx){
 }
 
 // Auto-refresh every 5 minutes
-setInterval(() => { if(SHEET_CSV) loadData(); }, 5 * 60 * 1000);
+setInterval(() => { if(SHEET_CSV) loadData(); }, 3 * 60 * 1000);
+
+// Show last updated time
+function updateLastRefreshed() {
+  const badge = document.getElementById('todayBadge');
+  if (badge) {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+    const count = allReports.filter(r => {
+      const today = new Date().toLocaleDateString('en-GB');
+      return (r['Timestamp']||'').includes(today) || 
+             (r['Date'] && new Date(r['Date']+'T12:00:00').toLocaleDateString('en-GB') === today);
+    }).length;
+    badge.textContent = count + ' today · Updated ' + time;
+  }
+}
 </script>
 </body>
 </html>
