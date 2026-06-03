@@ -809,13 +809,13 @@ select{
     <div class="lbl-sw">Jina lako — sahihi ya kidijitali</div>
     <input type="text" id="f_signName" placeholder="Type your full name / Andika jina lako kamili">
 
-    <div class="error-msg" id="errMsg">Please complete all required fields before submitting.<br><em>Tafadhali jaza nyanja zote zinazohitajika kabla ya kutuma.</em></div>
+    <div class="error-msg" id="errMsg">⚠ Please fill in Project, Date, Your Name, Work Done, and Sign-Off Name before submitting.<br><em>⚠ Tafadhali jaza Mradi, Tarehe, Jina Lako, Kazi Iliyofanywa, na Jina la Kuthibitisha.</em></div>
   </div>
 
   <div class="nav">
     <button class="btn-back" onclick="next(5)">← Back</button>
     <button class="btn-submit" id="submitBtn" onclick="submitForm()">
-      <span id="submitTxt">Submit Diary ✓</span>
+      <span id="submitTxt">✓ &nbsp;Submit Diary</span>
     </button>
   </div>
 </div>
@@ -1010,7 +1010,8 @@ async function submitForm() {
   const submitBtn = document.getElementById('submitBtn');
   const submitTxt = document.getElementById('submitTxt');
   submitBtn.disabled = true;
-  submitTxt.textContent = 'Submitting...';
+  submitBtn.style.background = '#1A4A7A';
+  submitTxt.textContent = '⏳  Submitting...';
 
   const data = {
     project: proj,
@@ -1060,13 +1061,15 @@ async function submitForm() {
   const _d = date ? new Date(date + 'T12:00:00') : null;
   const d = _d ? _d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
   const dSw = _d ? _d.toLocaleDateString('sw', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
+  const progColor = selectedProg.toLowerCase().includes('track') ? '#1A5C35' : selectedProg.toLowerCase().includes('risk') ? '#B45309' : '#991B1B';
   document.getElementById('successMeta').innerHTML = `
-    <strong>${proj}</strong>
-    ${d}<br>
-    Engineer: ${engineer}<br>
-    Workers: ${counts.actual} on site (${counts.planned} planned)<br>
-    Programme: ${selectedProg || '—'}<br>
-    Submitted by: ${signName}`;
+    <strong style="font-size:15px;color:#0B1F3A">${proj}</strong><br>
+    <span style="color:#64748B">${d}</span><br><br>
+    👷 Engineer: <strong>${engineer}</strong><br>
+    🔨 Workers on site: <strong>${counts.actual}</strong> (${counts.planned} planned)<br>
+    📊 Programme: <strong style="color:${progColor}">${selectedProg || 'Not specified'}</strong><br>
+    ✅ Submitted by: <strong>${signName}</strong><br>
+    🕐 Time: <strong>${new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'})} EAT</strong>`;
   document.getElementById('successScreen').classList.add('show');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
