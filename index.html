@@ -848,7 +848,8 @@ let selectedProg = '';
 let selectedInstr = '';
 let selectedWxImpact = '';
 let safetyAnswers = {};
-let SHEET_URL = localStorage.getItem('BEL_SHEET_URL') || '';
+// Hardcoded Apps Script URL - works on every device
+let SHEET_URL = localStorage.getItem('BEL_SHEET_URL') || 'https://script.google.com/macros/s/AKfycbxj60fuyuelPC6vagnHfmlRfM-ugSYSR8lCTk33XzNHRxCQ26_YYW2-9c9LCARViXuyHQ/exec';
 
 // ── INIT ───────────────────────────────────────────────────
 document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
@@ -1039,18 +1040,32 @@ async function submitForm() {
     signName: signName,
   };
 
-  // Submit to Google Sheets via URL params
+  // Submit to Google Sheets using iframe trick (bypasses CORS fully)
   if (SHEET_URL) {
     try {
       const params = new URLSearchParams();
       Object.entries(data).forEach(([k, v]) => params.append(k, String(v)));
-      const reqUrl = SHEET_URL + "?" + params.toString();
-      await fetch(reqUrl, {
-        method: "GET",
-        mode: 'no-cors',
-      });
+      const reqUrl = SHEET_URL + '?' + params.toString();
+      
+      // Use hidden iframe - works reliably with Google Apps Script
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = reqUrl;
+      document.body.appendChild(iframe);
+      
+      // Also try fetch as backup
+      try {
+        fetch(reqUrl, {mode: 'no-cors', cache: 'no-store'}).catch(()=>{});
+      } catch(e) {}
+      
+      // Clean up iframe after 10 seconds
+      setTimeout(() => { 
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe); 
+      }, 10000);
+      
+      console.log('Submitted to:', reqUrl.substring(0, 80) + '...');
     } catch (err) {
-      console.log('Fetch note:', err);
+      console.log('Submit note:', err);
     }
   }
 
