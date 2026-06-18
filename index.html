@@ -848,8 +848,8 @@ let selectedProg = '';
 let selectedInstr = '';
 let selectedWxImpact = '';
 let safetyAnswers = {};
-// Hardcoded Apps Script URL - works on every device
-let SHEET_URL = localStorage.getItem('BEL_SHEET_URL') || 'https://script.google.com/macros/s/AKfycbxj60fuyuelPC6vagnHfmlRfM-ugSYSR8lCTk33XzNHRxCQ26_YYW2-9c9LCARViXuyHQ/exec';
+// URL hardcoded — works on every device, no setup needed
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwQcIbkY1Hq6Hb7sEQp23Q6Uv6GQPMOlh59VLKyA5BhIGaICtXFXwMfg4GeOPe4ow8nnw/exec';
 
 // ── INIT ───────────────────────────────────────────────────
 document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
@@ -977,8 +977,7 @@ function saveUrl() {
     alert('Please paste a valid Google Apps Script URL.\nTafadhali weka URL sahihi ya Google Apps Script.');
     return;
   }
-  SHEET_URL = url;
-  localStorage.setItem('BEL_SHEET_URL', url);
+  localStorage.setItem('BEL_SHEET_URL', url); // saved but hardcoded URL takes priority
   document.getElementById('setupGuide').style.display = 'none';
   alert('✓ Connected! The form will now save to your Google Sheet.\n✓ Imeunganishwa! Fomu sasa itahifadhi kwenye Google Sheet yako.');
 }
