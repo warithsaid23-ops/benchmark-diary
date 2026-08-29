@@ -1,143 +1,1525 @@
-// BENCHMARK ENGINEERING LIMITED
-// Daily Site Diary - Google Apps Script
-// Version: Final
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>BEL — Daily Site Diary</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
 
-var CEO_EMAILS = ['bengmark2010@gmail.com', 'warithsaid23@gmail.com', 'sheikhan63@gmail.com', 'asaseif123@gmail.com'];
-var COMPANY_NAME = 'Benchmark Engineering Limited';
+/* ── RESET & BASE ───────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#0F2340;
+  --steel:#1A4A7A;
+  --gold:#C9A84C;
+  --green:#1A6B3A;
+  --red:#B91C1C;
+  --amber:#D97706;
+  --card:#FFFFFF;
+  --bg:#F1F4F8;
+  --border:#D8E0EA;
+  --text:#0F1923;
+  --muted:#64748B;
+  --light:#EEF2F7;
+  --purple:#4C1D95;
+  --success:#065F46;
+  --radius:10px;
+  --shadow:0 2px 12px rgba(15,35,64,0.08);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.6;
+  min-height:100vh;
+}
 
-function doGet(e) {
-  try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    var p = e.parameter;
+/* ── TOP BAR ────────────────────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:var(--navy);
+  padding:0 20px;
+  height:52px;
+  display:flex;align-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+}
+.topbar-logo{
+  display:flex;align-items:center;gap:10px;
+}
+.topbar-mark{
+  width:32px;height:32px;
+  background:var(--gold);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;
+  font-size:11px;font-weight:500;
+  color:var(--navy);
+  flex-shrink:0;
+}
+.topbar-name{
+  color:#fff;font-size:13px;font-weight:600;
+  letter-spacing:0.02em;
+}
+.topbar-right{
+  margin-left:auto;
+  display:flex;align-items:center;gap:8px;
+}
+.topbar-time{
+  font-family:'DM Mono',monospace;
+  font-size:12px;color:rgba(255,255,255,0.6);
+}
+.deadline-tag{
+  background:rgba(201,168,76,0.2);
+  border:1px solid rgba(201,168,76,0.4);
+  border-radius:20px;
+  padding:3px 10px;
+  font-size:11px;font-weight:600;
+  color:var(--gold);
+  display:flex;align-items:center;gap:5px;
+}
+.deadline-dot{
+  width:5px;height:5px;background:var(--gold);border-radius:50%;
+  animation:blink 2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
 
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow([
-        'Timestamp','Project','Date','Engineer',
-        'Planned Workers','Actual Workers','Hours Worked',
-        'Weather','Weather Impact','Weather Detail',
-        'Delays','Hours Lost','Work Done',
-        'Programme Status','Target Met','Target Notes',
-        'Tomorrow Plan','Safety Issues','Safety Detail',
-        'Materials','Plant','Instructions',
-        'Other Notes','Sign-Off Name'
-      ]);
-      sheet.getRange(1,1,1,32).setBackground('#0B1F3A').setFontColor('#FFFFFF').setFontWeight('bold');
+/* ── PROGRESS ───────────────────────────────────────────── */
+.progress-bar{
+  height:3px;background:rgba(201,168,76,0.3);
+}
+.progress-fill{
+  height:100%;background:var(--gold);
+  transition:width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── SHELL ──────────────────────────────────────────────── */
+.shell{
+  max-width:580px;margin:0 auto;
+  padding:20px 16px 80px;
+}
+
+/* ── PAGE DOTS ──────────────────────────────────────────── */
+.dots{
+  display:flex;justify-content:center;
+  gap:6px;margin-bottom:18px;
+}
+.dot{
+  height:6px;border-radius:3px;
+  background:var(--border);cursor:pointer;
+  transition:all 0.3s;width:6px;
+}
+.dot.active{background:var(--navy);width:24px;}
+.dot.done{background:var(--gold);opacity:0.6;}
+
+/* ── PAGE HEADER ────────────────────────────────────────── */
+.page-hd{
+  background:var(--navy);
+  border-radius:var(--radius) var(--radius) 0 0;
+  padding:24px 24px 20px;
+  position:relative;overflow:hidden;
+}
+.page-hd::after{
+  content:'';position:absolute;
+  top:-30px;right:-30px;
+  width:120px;height:120px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.04);
+}
+.page-hd.safety-hd{background:linear-gradient(135deg,#7F1D1D,#B91C1C)}
+.page-hd h2{
+  font-size:22px;font-weight:700;
+  color:#fff;letter-spacing:-0.02em;
+  margin-bottom:2px;
+}
+.page-hd .hd-sub{font-size:13px;color:rgba(255,255,255,0.6);font-style:italic}
+.page-hd .hd-note{
+  font-size:11px;color:rgba(255,255,255,0.45);
+  margin-top:10px;
+}
+
+/* ── CARDS ──────────────────────────────────────────────── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-top:none;
+  padding:20px;
+}
+.card:last-of-type{
+  border-radius:0 0 var(--radius) var(--radius);
+  border-bottom:1px solid var(--border);
+}
+.card+.card{border-top:1px solid var(--border)}
+
+/* ── LABELS ─────────────────────────────────────────────── */
+.lbl{
+  font-size:14px;font-weight:600;
+  color:var(--text);margin-bottom:2px;
+  display:flex;align-items:flex-start;gap:3px;
+}
+.lbl-sw{
+  font-size:12px;color:var(--muted);
+  font-style:italic;margin-bottom:10px;
+  line-height:1.4;
+}
+.req{color:var(--red);font-size:14px}
+
+/* ── INPUTS ─────────────────────────────────────────────── */
+input,select,textarea{
+  width:100%;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;
+  color:var(--text);
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  padding:11px 14px;
+  outline:none;
+  appearance:none;
+  -webkit-appearance:none;
+  transition:border-color 0.15s,box-shadow 0.15s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--navy);
+  box-shadow:0 0 0 3px rgba(15,35,64,0.08);
+}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748B' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  padding-right:36px;
+}
+
+/* ── CHOICE BUTTONS ─────────────────────────────────────── */
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.15s;
+  font-size:14px;
+  user-select:none;
+  background:#fff;
+}
+.choice:hover{border-color:var(--navy);background:var(--light)}
+.choice.sel{
+  border-color:var(--navy);
+  background:#EEF2F8;
+  font-weight:600;color:var(--navy);
+}
+.radio{
+  width:18px;height:18px;
+  border:2px solid var(--border);
+  border-radius:50%;flex-shrink:0;
+  transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;
+}
+.choice.sel .radio{border-color:var(--navy)}
+.choice.sel .radio::after{
+  content:'';
+  width:9px;height:9px;
+  background:var(--navy);border-radius:50%;
+}
+.choice-emoji{font-size:16px;flex-shrink:0}
+
+/* ── CHECKBOXES ─────────────────────────────────────────── */
+.checks{display:flex;flex-direction:column;gap:8px}
+.chk{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.15s;
+  font-size:14px;
+  user-select:none;
+  background:#fff;
+}
+.chk:hover{border-color:var(--navy);background:var(--light)}
+.chk.on{border-color:var(--navy);background:#EEF2F8;font-weight:600;color:var(--navy)}
+.chk-box{
+  width:18px;height:18px;
+  border:2px solid var(--border);
+  border-radius:4px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:#fff;
+  transition:all 0.15s;
+}
+.chk.on .chk-box{background:var(--navy);border-color:var(--navy)}
+
+/* ── COUNTER ────────────────────────────────────────────── */
+.counter-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.counter-box{
+  background:var(--light);
+  border:1.5px solid var(--border);
+  border-radius:8px;padding:12px 10px;
+  text-align:center;
+}
+.counter-lbl{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;line-height:1.3;text-transform:uppercase;letter-spacing:0.04em}
+.counter-ctrl{display:flex;align-items:center;justify-content:center;gap:8px}
+.cbtn{
+  width:30px;height:30px;
+  border-radius:50%;
+  border:1.5px solid var(--border);
+  background:#fff;
+  font-size:18px;font-weight:300;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text);
+  transition:all 0.15s;
+  line-height:1;
+}
+.cbtn:hover{border-color:var(--navy);color:var(--navy)}
+.cval{
+  font-family:'DM Mono',monospace;
+  font-size:22px;font-weight:500;
+  color:var(--navy);min-width:32px;
+  text-align:center;
+}
+
+/* ── RAG STATUS ─────────────────────────────────────────── */
+.rag{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.rag-btn{
+  padding:14px 8px;border:2px solid var(--border);
+  border-radius:8px;background:#fff;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;
+  cursor:pointer;transition:all 0.15s;
+  text-align:center;line-height:1.4;
+}
+.rag-btn small{display:block;font-size:10px;font-weight:400;opacity:0.7;margin-top:2px}
+.rag-btn.g.on{background:#ECFDF5;border-color:var(--green);color:var(--green)}
+.rag-btn.a.on{background:#FFFBEB;border-color:var(--amber);color:var(--amber)}
+.rag-btn.r.on{background:#FEF2F2;border-color:var(--red);color:var(--red)}
+.rag-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+
+/* ── SAFETY ─────────────────────────────────────────────── */
+.safety-item{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin-bottom:8px;
+  background:var(--light);
+}
+.safety-txt{flex:1;font-size:13px;line-height:1.4}
+.safety-sw-txt{font-size:11px;color:var(--muted);font-style:italic}
+.safety-btns{display:flex;gap:5px;flex-shrink:0}
+.sbtn{
+  padding:6px 10px;
+  border:1.5px solid var(--border);
+  border-radius:6px;
+  font-family:'DM Sans',sans-serif;
+  font-size:11px;font-weight:600;
+  cursor:pointer;background:#fff;
+  transition:all 0.12s;
+}
+.sbtn.y.on{background:#ECFDF5;border-color:var(--green);color:var(--green)}
+.sbtn.n.on{background:#FEF2F2;border-color:var(--red);color:var(--red)}
+.sbtn.na.on{background:var(--light);border-color:var(--navy);color:var(--navy)}
+
+/* ── PHOTO UPLOAD ───────────────────────────────────────── */
+.upload-area{
+  border:2px dashed var(--border);
+  border-radius:8px;padding:20px;
+  text-align:center;cursor:pointer;
+  transition:all 0.15s;background:var(--light);
+}
+.upload-area:hover{border-color:var(--navy);background:#EEF2F8}
+.upload-icon{font-size:28px;margin-bottom:6px}
+.upload-txt{font-size:13px;color:var(--muted)}
+.upload-txt strong{color:var(--navy);text-decoration:underline}
+.photo-preview{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;
+}
+.photo-thumb{
+  width:60px;height:60px;object-fit:cover;
+  border-radius:6px;border:2px solid var(--border);
+}
+
+/* ── DECLARATION BOX ────────────────────────────────────── */
+.declaration{
+  background:var(--light);
+  border-left:3px solid var(--gold);
+  border-radius:0 6px 6px 0;
+  padding:12px 16px;
+  font-size:12px;color:var(--muted);
+  font-style:italic;line-height:1.6;
+  margin-bottom:16px;
+}
+
+/* ── NAV BUTTONS ────────────────────────────────────────── */
+.nav{
+  display:flex;justify-content:space-between;
+  align-items:center;gap:10px;
+  margin-top:14px;
+}
+.btn-back{
+  padding:11px 22px;
+  background:#fff;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;
+  color:var(--muted);cursor:pointer;
+  transition:all 0.15s;
+}
+.btn-back:hover{border-color:var(--navy);color:var(--navy)}
+.btn-next{
+  padding:11px 28px;
+  background:var(--navy);
+  border:none;border-radius:8px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:600;
+  color:#fff;cursor:pointer;
+  transition:all 0.15s;
+  display:flex;align-items:center;gap:6px;
+}
+.btn-next:hover{background:var(--steel)}
+.btn-submit{
+  padding:13px 32px;
+  background:var(--gold);
+  border:none;border-radius:8px;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:700;
+  color:var(--navy);cursor:pointer;
+  transition:all 0.15s;
+  display:flex;align-items:center;gap:8px;
+}
+.btn-submit:hover{background:#D4A93A;transform:translateY(-1px);box-shadow:0 4px 12px rgba(201,168,76,0.4)}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.btn-submit.loading{background:#CCC;color:#666}
+
+/* ── SUCCESS SCREEN ─────────────────────────────────────── */
+.success{
+  display:none;
+  background:var(--card);
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  padding:52px 28px;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.success.show{display:block}
+.success-icon{font-size:56px;margin-bottom:20px}
+.success-title{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.7}
+.success-meta{
+  background:var(--light);border-radius:8px;
+  padding:16px;font-size:12px;color:var(--muted);
+  margin-bottom:20px;text-align:left;
+}
+.success-meta strong{color:var(--navy);display:block;margin-bottom:4px}
+.btn-again{
+  padding:10px 24px;background:var(--navy);
+  color:#fff;border:none;border-radius:8px;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;
+}
+
+/* ── ERROR MESSAGE ──────────────────────────────────────── */
+.error-msg{
+  background:#FEF2F2;border:1px solid #FCA5A5;
+  border-radius:8px;padding:12px 16px;
+  font-size:13px;color:var(--red);
+  margin-top:10px;display:none;
+}
+.error-msg.show{display:block}
+
+/* ── SETUP BANNER ───────────────────────────────────────── */
+.setup-banner{
+  background:linear-gradient(135deg,#1E3A5F,#2D5A8E);
+  border-radius:var(--radius);
+  padding:20px;
+  margin-bottom:16px;
+  color:#fff;
+}
+.setup-banner h3{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.setup-steps{display:flex;flex-direction:column;gap:8px}
+.setup-step{
+  display:flex;gap:10px;font-size:13px;
+  color:rgba(255,255,255,0.85);line-height:1.5;
+}
+.setup-step-num{
+  width:22px;height:22px;background:var(--gold);
+  border-radius:50%;color:var(--navy);
+  font-size:11px;font-weight:700;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.script-box{
+  background:rgba(0,0,0,0.3);border-radius:6px;
+  padding:12px;margin-top:12px;
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:#A8D5BA;line-height:1.8;
+  white-space:pre-wrap;word-break:break-all;
+  overflow-x:auto;
+}
+.copy-script-btn{
+  margin-top:10px;padding:8px 16px;
+  background:var(--gold);border:none;border-radius:6px;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:600;color:var(--navy);
+  cursor:pointer;transition:all 0.15s;
+}
+.copy-script-btn.done{background:#2D6A4F;color:#fff}
+
+/* ── SHEET URL INPUT ────────────────────────────────────── */
+.sheet-config{
+  background:var(--light);
+  border:1.5px solid var(--border);
+  border-radius:8px;padding:16px;
+  margin-bottom:14px;
+}
+.sheet-config label{
+  font-size:12px;font-weight:600;
+  color:var(--navy);display:block;margin-bottom:6px;
+}
+.sheet-config input{font-size:13px;padding:9px 12px}
+.sheet-config .hint{font-size:11px;color:var(--muted);margin-top:5px}
+.save-url-btn{
+  margin-top:8px;padding:8px 16px;
+  background:var(--navy);border:none;border-radius:6px;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:600;color:#fff;
+  cursor:pointer;
+}
+
+@media(max-width:480px){
+  .counter-grid{grid-template-columns:1fr}
+  .rag{grid-template-columns:1fr}
+  .safety-btns{flex-direction:column;gap:4px}
+  .page-hd{padding:18px 16px 14px}
+  .card{padding:16px}
+}@media(max-width:480px){
+  .counter-grid{grid-template-columns:1fr}
+  .rag{grid-template-columns:1fr}
+  .safety-btns{flex-direction:column;gap:4px}
+  .page-hd{padding:18px 16px 14px}
+  .card{padding:16px}
+}
+
+/* ── NEW FEATURE STYLES ──────────────────────── */
+.worker-row{
+  display:grid;grid-template-columns:1fr 80px 80px 80px;
+  gap:8px;align-items:center;
+  padding:10px 14px;background:var(--light);
+  border:1px solid var(--border);border-radius:8px;
+  margin-bottom:6px;font-size:13px;
+}
+.worker-row .worker-name{font-weight:600;color:var(--navy)}
+.worker-row input[type=number]{
+  padding:6px 8px;font-size:13px;text-align:center;
+  border:1.5px solid var(--border);border-radius:6px;
+  font-family:'DM Sans',sans-serif;
+}
+.worker-row input:focus{border-color:var(--navy)}
+.worker-hdr{
+  display:grid;grid-template-columns:1fr 80px 80px 80px;
+  gap:8px;padding:6px 14px;
+  font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.06em;
+}
+.absent-toggle{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--muted);cursor:pointer;
+  user-select:none;margin-top:4px;
+}
+.absent-toggle input{width:16px;height:16px;accent-color:var(--red);cursor:pointer}
+
+.task-card{
+  background:var(--light);border:1.5px solid var(--border);
+  border-radius:8px;padding:14px;margin-bottom:8px;
+}
+.task-card .task-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.task-num{
+  width:24px;height:24px;background:var(--navy);border-radius:50%;
+  color:#fff;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.priority-btns{display:flex;gap:6px}
+.priority-btn{
+  padding:4px 10px;border-radius:4px;border:1.5px solid var(--border);
+  font-size:11px;font-weight:700;cursor:pointer;background:#fff;
+  transition:all 0.12s;font-family:'DM Sans',sans-serif;
+}
+.priority-btn.high.on{background:#FEF2F2;border-color:var(--red);color:var(--red)}
+.priority-btn.med.on{background:#FFFBEB;border-color:var(--amber);color:var(--amber)}
+.priority-btn.low.on{background:#ECFDF5;border-color:var(--green);color:var(--green)}
+
+.incident-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.inc-type-btn{
+  padding:12px 10px;border:1.5px solid var(--border);
+  border-radius:8px;background:#fff;text-align:center;
+  cursor:pointer;transition:all 0.15s;font-size:12px;
+  font-weight:600;color:var(--muted);
+  font-family:'DM Sans',sans-serif;
+}
+.inc-type-btn.sel{border-color:var(--red);background:#FEF2F2;color:var(--red)}
+.inc-type-btn .inc-icon{font-size:22px;display:block;margin-bottom:4px}
+.severity-row{display:flex;gap:8px;margin-top:10px}
+.sev-btn{
+  flex:1;padding:10px 6px;border:1.5px solid var(--border);
+  border-radius:8px;background:#fff;text-align:center;
+  cursor:pointer;font-size:12px;font-weight:700;
+  font-family:'DM Sans',sans-serif;transition:all 0.15s;
+}
+.sev-btn.high.on{background:#FEF2F2;border-color:var(--red);color:var(--red)}
+.sev-btn.med.on{background:#FFFBEB;border-color:var(--amber);color:var(--amber)}
+.sev-btn.low.on{background:#ECFDF5;border-color:var(--green);color:var(--green)}
+.page-hd.hr-hd{background:linear-gradient(135deg,#1A3A6B,#1A4A7A)}
+.page-hd.task-hd{background:linear-gradient(135deg,#4C1D95,#5C2D91)}
+.page-hd.incident-hd{background:linear-gradient(135deg,#7C2D12,#B91C1C)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="topbar-mark">BE</div>
+    <span class="topbar-name">Benchmark Engineering</span>
+  </div>
+  <div class="topbar-right">
+    <div class="deadline-tag">
+      <span class="deadline-dot"></span>
+      7:00 PM · Saa moja usiku
+    </div>
+  </div>
+</div>
+<div class="progress-bar">
+  <div class="progress-fill" id="progFill" style="width:0%"></div>
+</div>
+
+<div class="shell">
+
+<!-- DOTS -->
+<div class="dots" id="dots"></div>
+
+<!-- ══════════ FORM ══════════ -->
+<div id="formWrap">
+
+<!-- PAGE 1 — WHO & WHEN -->
+<div class="ms-page" id="p1">
+  <div class="page-hd">
+    <h2>Daily Site Diary</h2>
+    <div class="hd-sub">Diari ya Kila Siku ya Tovuti</div>
+    <div class="hd-note">★ = Required field / Sehemu inayohitajika</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Project <span class="req">★</span></div>
+    <div class="lbl-sw">Jina la Mradi</div>
+    <select id="f_project">
+      <option value="">Chagua mradi / Select project...</option>
+      <option>566 Stone Town</option>
+      <option>Morogoro Hotel</option>
+      <option>Chonga Health Center</option>
+      <option>Bwekunduni Market</option>
+      <option>Rose House Chukwani</option>
+      <option>Jadida School</option>
+      <option>Matemwe Market</option>
+      <option>ZFDA Chamanangwe</option>
+      <option>Ashuu Buyu</option>
+      <option>Zainab Chukwani</option>
+      <option>Aluwiya Chukwani</option>
+      <option>Mbarouk Kibondeni</option>
+      <option>Huda Kisauni</option>
+      <option>Issam Chukwani</option>
+      <option>Fatma Kidishi Kwerekwe</option>
+      <option>Fatma Abdallah Tunguu</option>
+      <option>Nyingine / Other</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Date <span class="req">★</span></div>
+    <div class="lbl-sw">Tarehe</div>
+    <input type="date" id="f_date">
+  </div>
+
+  <div class="card">
+    <div class="lbl">Your Name <span class="req">★</span></div>
+    <div class="lbl-sw">Jina Lako</div>
+    <input type="text" id="f_engineer" placeholder="Full name / Jina kamili">
+  </div>
+
+  <div class="card">
+    <div class="lbl">People on site today</div>
+    <div class="lbl-sw">Watu kwenye tovuti leo</div>
+    <div class="counter-grid">
+      <div class="counter-box">
+        <div class="counter-lbl">Planned<br>Wanaotarajiwa</div>
+        <div class="counter-ctrl">
+          <button class="cbtn" onclick="adj('planned',-1)">−</button>
+          <span class="cval" id="c_planned">0</span>
+          <button class="cbtn" onclick="adj('planned',1)">+</button>
+        </div>
+      </div>
+      <div class="counter-box">
+        <div class="counter-lbl">Actual<br>Waliopo</div>
+        <div class="counter-ctrl">
+          <button class="cbtn" onclick="adj('actual',-1)">−</button>
+          <span class="cval" id="c_actual">0</span>
+          <button class="cbtn" onclick="adj('actual',1)">+</button>
+        </div>
+      </div>
+      <div class="counter-box">
+        <div class="counter-lbl">Avg Hours<br>Masaa ya kati</div>
+        <div class="counter-ctrl">
+          <button class="cbtn" onclick="adj('hours',-1)">−</button>
+          <span class="cval" id="c_hours">8</span>
+          <button class="cbtn" onclick="adj('hours',1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div></div>
+    <button class="btn-next" onclick="next(2)">Next → <span style="opacity:0.6;font-size:12px">Weather</span></button>
+  </div>
+</div>
+
+<!-- PAGE 2 — WEATHER & DELAYS -->
+<div class="ms-page" id="p2" style="display:none">
+  <div class="page-hd">
+    <h2>Weather & Delays</h2>
+    <div class="hd-sub">Hali ya Hewa na Ucheleweshaji</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Weather today</div>
+    <div class="lbl-sw">Hali ya hewa leo</div>
+    <div class="choices" id="wx_choices">
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">☀️</span>Clear / Sunny — Wazi / Jua</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">⛅</span>Partly Cloudy — Mawingu kidogo</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">☁️</span>Overcast — Mawingu mengi</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">🌧️</span>Light Rain — Mvua kidogo</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">⛈️</span>Heavy Rain — Mvua kubwa</div>
+      <div class="choice" onclick="pick(this,'wx')"><div class="radio"></div><span class="choice-emoji">🌩️</span>Storm — Dhoruba</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Did weather stop or slow work?</div>
+    <div class="lbl-sw">Je, hali ya hewa ilisimamisha au kupunguza kasi ya kazi?</div>
+    <div class="choices">
+      <div class="choice" onclick="pick(this,'wximpact');show('wxDetail')"><div class="radio"></div>Yes — Ndiyo</div>
+      <div class="choice" onclick="pick(this,'wximpact');hide('wxDetail')"><div class="radio"></div>No — Hapana</div>
+    </div>
+    <div id="wxDetail" style="display:none;margin-top:12px">
+      <textarea id="f_weatherDetail" placeholder="How long? What was affected? / Muda gani? Nini kiliathirika?"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Any delays today?</div>
+    <div class="lbl-sw">Ucheleweshaji wowote leo? — Weka tiki zote</div>
+    <div class="checks">
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Materials late or short — Vifaa vilichelewa / havikutosha</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Plant breakdown — Mitambo imevunjika</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Drawing / design issue — Tatizo la mchoro</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Subcontractor issue — Tatizo la mkandarasi</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>Client instruction — Maagizo ya mteja</div>
+      <div class="chk" onclick="chk(this)"><div class="chk-box"></div>No delays — Hakuna ucheleweshaji</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Hours lost to delays</div>
+    <div class="lbl-sw">Masaa yaliyopotea — Ingiza 0 kama hakuna</div>
+    <input type="number" id="f_hoursLost" placeholder="0" min="0" step="0.5" style="max-width:140px">
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(1)">← Back</button>
+    <button class="btn-next" onclick="next(3)">Next → <span style="opacity:0.6;font-size:12px">Work</span></button>
+  </div>
+</div>
+
+<!-- PAGE 3 — WORK DONE -->
+<div class="ms-page" id="p3" style="display:none">
+  <div class="page-hd">
+    <h2>Work Done Today</h2>
+    <div class="hd-sub">Kazi Zilizofanywa Leo</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Describe the main work carried out <span class="req">★</span></div>
+    <div class="lbl-sw">Elezea kazi kuu zilizofanywa</div>
+    <textarea id="f_workDone" placeholder="e.g. Block C ground floor slab — poured 45m² concrete, grid A–D / Mfano: Sakafu ya chini Block C — kumwaga zege mita 45" style="min-height:110px"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Programme target met today? <span class="req">★</span></div>
+    <div class="lbl-sw">Je, lengo la mpango limetimizwa leo?</div>
+    <div class="choices">
+      <div class="choice" onclick="pick(this,'target');hide('targetDetail')"><div class="radio"></div>✅ Yes, on track — Ndiyo, kwenye ratiba</div>
+      <div class="choice" onclick="pick(this,'target');show('targetDetail')"><div class="radio"></div>⚠️ Partially — Sehemu tu</div>
+      <div class="choice" onclick="pick(this,'target');show('targetDetail')"><div class="radio"></div>❌ No, behind — Hapana, tumechelewa</div>
+    </div>
+    <div id="targetDetail" style="display:none;margin-top:12px">
+      <textarea id="f_targetNotes" placeholder="What was not completed and why? / Nini hakikukamilika na kwa nini?"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Overall programme status <span class="req">★</span></div>
+    <div class="lbl-sw">Hali ya jumla ya mpango</div>
+    <div class="rag">
+      <button class="rag-btn g" onclick="ragPick(this,'green')">✓ On Track<small>Kwenye Ratiba</small></button>
+      <button class="rag-btn a" onclick="ragPick(this,'amber')">⚠ At Risk<small>Iko Hatarini</small></button>
+      <button class="rag-btn r" onclick="ragPick(this,'red')">✗ Delayed<small>Imechelewa</small></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Plan for tomorrow</div>
+    <div class="lbl-sw">Mpango wa kesho</div>
+    <textarea id="f_tomorrow" placeholder="Key activities planned / Shughuli kuu zilizopangwa kwa kesho"></textarea>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(2)">← Back</button>
+    <button class="btn-next" onclick="next(4)">Next → <span style="opacity:0.6;font-size:12px">Safety</span></button>
+  </div>
+</div>
+
+<!-- PAGE 4 — SAFETY -->
+<div class="ms-page" id="p4" style="display:none">
+  <div class="page-hd safety-hd">
+    <h2>⚠ Safety Checks</h2>
+    <div class="hd-sub">Ukaguzi wa Usalama — all items required / vipengele vyote vinahitajika</div>
+  </div>
+
+  <div class="card">
+    <div id="safetyList"></div>
+    <div id="safetyDetail" style="display:none;margin-top:14px">
+      <div class="lbl" style="color:var(--red)">Describe the incident or concern <span class="req">★</span></div>
+      <div class="lbl-sw">Elezea tukio au wasiwasi</div>
+      <textarea id="f_safetyDetail" placeholder="What happened, who was involved, action taken / Nini kilitokea, nani alihusika, hatua zilizochukuliwa" style="min-height:100px"></textarea>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(3)">← Back</button>
+    <button class="btn-next" onclick="next(5)">Next → <span style="opacity:0.6;font-size:12px">Materials</span></button>
+  </div>
+</div>
+
+<!-- PAGE 5 — MATERIALS & PLANT -->
+<div class="ms-page" id="p5" style="display:none">
+  <div class="page-hd">
+    <h2>Materials & Plant</h2>
+    <div class="hd-sub">Vifaa na Mitambo</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Materials delivered today</div>
+    <div class="lbl-sw">Vifaa vilivyoletwa leo — Andika HAKUNA kama hakuna</div>
+    <textarea id="f_materials" placeholder="What · How much · Supplier&#10;e.g. Cement — 50 bags — Ali Traders&#10;Write NONE if nothing / Andika HAKUNA kama hakuna"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Plant & equipment on site</div>
+    <div class="lbl-sw">Mitambo kwenye tovuti — Andika HAKUNA kama hakuna</div>
+    <textarea id="f_plant" placeholder="e.g. Concrete mixer — working — 6hrs&#10;Water pump — broken — reported to PM&#10;Write NONE if nothing / Andika HAKUNA kama hakuna"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Any instructions received today?</div>
+    <div class="lbl-sw">Je, maagizo yoyote yalipokelewa leo?</div>
+    <div class="choices">
+      <div class="choice" onclick="pick(this,'instr');show('instrDetail')"><div class="radio"></div>Yes — Ndiyo</div>
+      <div class="choice" onclick="pick(this,'instr');hide('instrDetail')"><div class="radio"></div>No — Hapana</div>
+    </div>
+    <div id="instrDetail" style="display:none;margin-top:12px">
+      <textarea id="f_instructions" placeholder="What was the instruction and who gave it? / Maagizo yalikuwa nini na nani aliyatoa?"></textarea>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(4)">← Back</button>
+    <button class="btn-next" onclick="next(6)">Next → <span style="opacity:0.6;font-size:12px">Sign off</span></button>
+  </div>
+</div>
+
+<!-- PAGE 7 — TIMESHEET & HR -->
+<div class="ms-page" id="p7" style="display:none">
+  <div class="page-hd hr-hd">
+    <h2>👷 Timesheet & Attendance</h2>
+    <div class="hd-sub">Ratiba ya Kazi na Mahudhurio</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Permanent staff attendance today</div>
+    <div class="lbl-sw">Mahudhurio ya wafanyakazi wa kudumu leo</div>
+    <div class="worker-hdr">
+      <span>Name / Jina</span>
+      <span style="text-align:center">Hours / Masaa</span>
+      <span style="text-align:center">OT Hrs</span>
+      <span style="text-align:center">Absent</span>
+    </div>
+    <div id="workerList">
+      <!-- Workers rendered by JS -->
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px;padding:0 14px">
+      Total hours today: <strong id="totalHours">0</strong> &nbsp;|&nbsp; 
+      Overtime: <strong id="totalOT">0</strong> hrs &nbsp;|&nbsp;
+      Absent: <strong id="totalAbsent">0</strong>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Overtime reason (if any)</div>
+    <div class="lbl-sw">Sababu ya kazi ya ziada (kama ipo)</div>
+    <input type="text" id="f_otReason" placeholder="e.g. Concrete pour required extended shift">
+  </div>
+
+  <div class="card">
+    <div class="lbl">Any HR issues to report?</div>
+    <div class="lbl-sw">Je, kuna masuala ya HR ya kuripoti?</div>
+    <div class="choices">
+      <div class="choice" onclick="pick(this,'hrissue');show('hrDetail')"><div class="radio"></div>Yes — Ndiyo</div>
+      <div class="choice" onclick="pick(this,'hrissue');hide('hrDetail')"><div class="radio"></div>No — Hapana</div>
+    </div>
+    <div id="hrDetail" style="display:none;margin-top:12px">
+      <textarea id="f_hrIssue" placeholder="Describe the HR issue — dispute, conduct, absence, injury etc.&#10;Elezea tatizo la HR — ugomvi, tabia, kutokuwepo, majeraha n.k."></textarea>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(6)">← Back</button>
+    <button class="btn-next" onclick="next(8)">Next → <span style="opacity:0.6;font-size:12px">Tasks</span></button>
+  </div>
+</div>
+
+<!-- PAGE 8 — TASK ASSIGNMENT -->
+<div class="ms-page" id="p8" style="display:none">
+  <div class="page-hd task-hd">
+    <h2>📋 Tasks for Tomorrow</h2>
+    <div class="hd-sub">Kazi za Kesho — assign and prioritise</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Assign tasks for tomorrow's shift</div>
+    <div class="lbl-sw">Panga kazi za zamu ya kesho</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Set up to 4 tasks with priority and assignee. Leave blank if not needed.</div>
+
+    <div id="taskCards"></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Any materials needed for tomorrow?</div>
+    <div class="lbl-sw">Je, kuna vifaa vinavyohitajika kesho?</div>
+    <textarea id="f_materialsNeeded" placeholder="List materials needed — PM will review and arrange&#10;Orodhesha vifaa vinavyohitajika — PM atakagua na kupanga"></textarea>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(7)">← Back</button>
+    <button class="btn-next" onclick="next(9)">Next → <span style="opacity:0.6;font-size:12px">Incidents</span></button>
+  </div>
+</div>
+
+<!-- PAGE 9 — INCIDENT REPORT -->
+<div class="ms-page" id="p9" style="display:none">
+  <div class="page-hd incident-hd">
+    <h2>🚨 Incident Report</h2>
+    <div class="hd-sub">Ripoti ya Tukio — complete only if an incident occurred today</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Did any incident occur today?</div>
+    <div class="lbl-sw">Je, tukio lolote lilitokea leo?</div>
+    <div class="choices">
+      <div class="choice" onclick="pick(this,'incident');show('incidentDetail')"><div class="radio"></div>Yes — report below</div>
+      <div class="choice" onclick="pick(this,'incident');hide('incidentDetail')"><div class="radio"></div>No incidents today ✓</div>
+    </div>
+  </div>
+
+  <div id="incidentDetail" style="display:none">
+    <div class="card">
+      <div class="lbl">Type of incident</div>
+      <div class="incident-type-grid">
+        <button class="inc-type-btn" onclick="selectIncType(this,'Near Miss')"><span class="inc-icon">⚠️</span>Near Miss</button>
+        <button class="inc-type-btn" onclick="selectIncType(this,'Accident / Injury')"><span class="inc-icon">🤕</span>Accident / Injury</button>
+        <button class="inc-type-btn" onclick="selectIncType(this,'Property Damage')"><span class="inc-icon">🏗️</span>Property Damage</button>
+        <button class="inc-type-btn" onclick="selectIncType(this,'Unsafe Condition')"><span class="inc-icon">🔴</span>Unsafe Condition</button>
+      </div>
+      <input type="hidden" id="f_incidentType" value="">
+    </div>
+
+    <div class="card">
+      <div class="lbl">Severity</div>
+      <div class="severity-row">
+        <button class="sev-btn high" onclick="selectSeverity(this,'High')">🔴 High</button>
+        <button class="sev-btn med" onclick="selectSeverity(this,'Medium')">🟡 Medium</button>
+        <button class="sev-btn low" onclick="selectSeverity(this,'Low')">🟢 Low</button>
+      </div>
+      <input type="hidden" id="f_severity" value="">
+    </div>
+
+    <div class="card">
+      <div class="lbl">Time of incident</div>
+      <input type="time" id="f_incidentTime" style="max-width:160px">
+    </div>
+
+    <div class="card">
+      <div class="lbl">Location on site</div>
+      <input type="text" id="f_incidentLocation" placeholder="e.g. Block C, 2nd floor, grid B3">
+    </div>
+
+    <div class="card">
+      <div class="lbl">People involved</div>
+      <input type="text" id="f_incidentPeople" placeholder="Names and roles of anyone involved">
+    </div>
+
+    <div class="card">
+      <div class="lbl">What happened — full description ★</div>
+      <textarea id="f_incidentDesc" placeholder="Describe exactly what happened, the sequence of events, and any immediate actions taken..." style="min-height:100px"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="lbl">Immediate action taken</div>
+      <textarea id="f_incidentAction" placeholder="What was done immediately after the incident? Medical attention given? Area made safe?"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="lbl">Has this been reported to the Project Manager?</div>
+      <div class="choices">
+        <div class="choice" onclick="pick(this,'pmnotified')"><div class="radio"></div>Yes — PM notified</div>
+        <div class="choice" onclick="pick(this,'pmnotified')"><div class="radio"></div>No — not yet notified</div>
+        <div class="choice" onclick="pick(this,'pmnotified')"><div class="radio"></div>PM was present on site</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(8)">← Back</button>
+    <button class="btn-next" onclick="next(6)">Next → <span style="opacity:0.6;font-size:12px">Sign Off</span></button>
+  </div>
+</div>
+
+<!-- PAGE 6 — SIGN OFF -->
+<div class="ms-page" id="p6" style="display:none">
+  <div class="page-hd">
+    <h2>Sign Off</h2>
+    <div class="hd-sub">Uthibitisho wa Mwisho</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Site photos (optional)</div>
+    <div class="lbl-sw">Picha za tovuti — si lazima, upeo 5</div>
+    <div class="upload-area" onclick="document.getElementById('photoIn').click()">
+      <div class="upload-icon">📷</div>
+      <div class="upload-txt"><strong>Tap to add photos</strong> from camera or gallery<br><em>Gusa kuongeza picha kutoka kamera au gallery</em></div>
+      <input type="file" id="photoIn" accept="image/*" multiple style="display:none" onchange="showPreviews(this)">
+    </div>
+    <div class="photo-preview" id="photoPrev"></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Anything else to report?</div>
+    <div class="lbl-sw">Kuna kingine chochote cha kuripoti?</div>
+    <textarea id="f_otherNotes" placeholder="Visitors, client comments, unusual events / Wageni, maoni ya mteja, matukio ya ajabu"></textarea>
+  </div>
+
+  <div class="card">
+    <div id="installPrompt" style="display:none;background:#EEF2F8;border:1.5px solid #1A4A7A;border-radius:8px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;color:#0F1923;margin-bottom:4px">Add to home screen / Ongeza kwenye skrini ya nyumbani</div>
+      <div style="font-size:12px;color:#64748B;line-height:1.6">Open with one tap every day. No link needed after this.<br><em>Fungua kwa kubonyeza mara moja kila siku. Hakuna kiungo kinachohitajika baada ya hii.</em></div>
+      <div style="font-size:11px;color:#64748B;margin-top:8px">iPhone: Share button then Add to Home Screen &nbsp;|&nbsp; Android: Menu then Add to Home Screen</div>
+    </div>
+        <div class="declaration">
+      "I confirm this is a true and accurate record of today's site activity."<br>
+      <em>"Ninathibitisha kwamba hii ni rekodi ya kweli na sahihi ya shughuli za tovuti za leo."</em>
+    </div>
+    <div class="lbl">Your name to submit <span class="req">★</span></div>
+    <div class="lbl-sw">Jina lako — sahihi ya kidijitali</div>
+    <input type="text" id="f_signName" placeholder="Type your full name / Andika jina lako kamili">
+
+    <div class="error-msg" id="errMsg">⚠ Please fill in Project, Date, Your Name, Work Done, and Sign-Off Name before submitting.<br><em>⚠ Tafadhali jaza Mradi, Tarehe, Jina Lako, Kazi Iliyofanywa, na Jina la Kuthibitisha.</em></div>
+  </div>
+
+  <div class="nav">
+    <button class="btn-back" onclick="next(9)">← Back</button>
+    <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+      <span id="submitTxt">✓ &nbsp;Submit Diary</span>
+    </button>
+  </div>
+</div>
+
+</div><!-- formWrap -->
+
+<!-- SUCCESS SCREEN -->
+<div class="success" id="successScreen">
+  <div class="success-icon">✅</div>
+  <div class="success-title">Diary Submitted!</div>
+  <div class="success-sub">
+    Your site diary has been recorded in the project spreadsheet.<br>
+    The Project Manager has been notified automatically.<br><br>
+    <em>Diari yako imerekodiwa kwenye jedwali la mradi. Meneja wa Mradi amearifu moja kwa moja.</em>
+  </div>
+  <div class="success-meta" id="successMeta"></div>
+  <button class="btn-again" onclick="location.reload()">Submit another / Wasilisha nyingine</button>
+</div>
+
+</div><!-- shell -->
+
+<script>
+// ── STATE ──────────────────────────────────────────────────
+let cur = 1;
+const TOTAL = 9;
+const counts = { planned:0, actual:0, hours:8 };
+let selectedWx = '';
+let selectedTarget = '';
+let selectedProg = '';
+let selectedInstr = '';
+let selectedWxImpact = '';
+let safetyAnswers = {};
+// URL hardcoded — works on every device, no setup needed
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwQcIbkY1Hq6Hb7sEQp23Q6Uv6GQPMOlh59VLKyA5BhIGaICtXFXwMfg4GeOPe4ow8nnw/exec';
+
+// ── INIT ───────────────────────────────────────────────────
+document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
+
+// Sheet URL loaded from localStorage
+if (SHEET_URL) {
+  console.log('Google Sheet connected.');
+}
+
+// Build dots
+const dotsEl = document.getElementById('dots');
+for (let i = 1; i <= TOTAL; i++) {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 1 ? ' active' : '');
+  d.id = 'dot' + i;
+  d.onclick = () => next(i);
+  dotsEl.appendChild(d);
+}
+updateProg();
+
+// Build safety items
+const safetyData = [
+  ["Toolbox talk done today?", "Je, mazungumzo ya zana yalifanyika leo?", "toolbox"],
+  ["All new workers inducted?", "Je, wafanyakazi wapya wote waliingizwa?", "inducted"],
+  ["PPE worn correctly by everyone?", "Je, kila mtu amevaa vifaa vya kinga vizuri?", "ppe"],
+  ["Any near misses?", "Je, kulikuwa na ajali karibu yoyote?", "nearmiss"],
+  ["Any accidents or incidents?", "Je, kulikuwa na ajali yoyote?", "accident"],
+  ["Site clean and tidy?", "Je, tovuti ni safi na nadhifu?", "tidy"],
+];
+const sl = document.getElementById('safetyList');
+safetyData.forEach(([en, sw, key]) => {
+  const div = document.createElement('div');
+  div.className = 'safety-item';
+  div.innerHTML = `
+    <div class="safety-txt">${en}<br><span class="safety-sw-txt">${sw}</span></div>
+    <div class="safety-btns">
+      <button class="sbtn y" onclick="sPick(this,'yes','${key}')">Yes</button>
+      <button class="sbtn n" onclick="sPick(this,'no','${key}')">No</button>
+      <button class="sbtn na" onclick="sPick(this,'na','${key}')">N/A</button>
+    </div>`;
+  sl.appendChild(div);
+});
+
+// ── FUNCTIONS ──────────────────────────────────────────────
+function next(n) {
+  document.getElementById('p' + cur).style.display = 'none';
+  document.getElementById('dot' + cur).classList.remove('active');
+  if (n < cur) document.getElementById('dot' + (cur)).classList.remove('done');
+  document.getElementById('dot' + cur).classList.add('done');
+  cur = n;
+  document.getElementById('p' + cur).style.display = 'block';
+  document.getElementById('dot' + cur).classList.remove('done');
+  document.getElementById('dot' + cur).classList.add('active');
+  updateProg();
+  if (cur === 6) showInstallPrompt();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProg() {
+  const pct = Math.round(((cur - 1) / TOTAL) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+}
+
+function pick(el, group) {
+  el.closest('.choices').querySelectorAll('.choice').forEach(i => i.classList.remove('sel'));
+  el.classList.add('sel');
+  if (group === 'wx') selectedWx = el.textContent.trim().split('—')[0].trim();
+  if (group === 'target') selectedTarget = el.textContent.trim();
+  if (group === 'wximpact') selectedWxImpact = el.textContent.trim();
+  if (group === 'instr') selectedInstr = el.textContent.trim();
+}
+
+function chk(el) {
+  el.classList.toggle('on');
+  el.querySelector('.chk-box').textContent = el.classList.contains('on') ? '✓' : '';
+}
+
+function ragPick(btn, color) {
+  btn.closest('.rag').querySelectorAll('.rag-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  selectedProg = btn.textContent.trim().split('\n')[0];
+}
+
+function sPick(btn, val, key) {
+  btn.closest('.safety-btns').querySelectorAll('.sbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  safetyAnswers[key] = val;
+  const anyYes = Object.values(safetyAnswers).includes('yes');
+  document.getElementById('safetyDetail').style.display = anyYes ? 'block' : 'none';
+}
+
+function adj(field, delta) {
+  counts[field] = Math.max(0, counts[field] + delta);
+  document.getElementById('c_' + field).textContent = counts[field];
+}
+
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+function showPreviews(input) {
+  const prev = document.getElementById('photoPrev');
+  prev.innerHTML = '';
+  [...input.files].slice(0, 5).forEach(f => {
+    const img = document.createElement('img');
+    img.className = 'photo-thumb';
+    img.src = URL.createObjectURL(f);
+    prev.appendChild(img);
+  });
+}
+
+function getDelays() {
+  return [...document.querySelectorAll('.chk.on')].map(c => c.textContent.trim().split('—')[0].trim()).join(', ') || 'None';
+}
+
+function getSafetyIssues() {
+  return Object.entries(safetyAnswers)
+    .filter(([k, v]) => v === 'yes')
+    .map(([k]) => k).join(', ') || 'None';
+}
+
+// ── SETUP ─────────────────────────────────────────────────
+function saveUrl() {
+  const url = document.getElementById('sheetUrl').value.trim();
+  if (!url || !url.includes('script.google.com')) {
+    alert('Please paste a valid Google Apps Script URL.\nTafadhali weka URL sahihi ya Google Apps Script.');
+    return;
+  }
+  localStorage.setItem('BEL_SHEET_URL', url); // saved but hardcoded URL takes priority
+  document.getElementById('setupGuide').style.display = 'none';
+  alert('✓ Connected! The form will now save to your Google Sheet.\n✓ Imeunganishwa! Fomu sasa itahifadhi kwenye Google Sheet yako.');
+}
+
+function copyScript() {
+  const text = document.getElementById('scriptCode').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyScriptBtn');
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('done');
+    setTimeout(() => { btn.textContent = '⎘ Copy Script'; btn.classList.remove('done'); }, 3000);
+  });
+}
+
+// ── SUBMIT ─────────────────────────────────────────────────
+let isSubmitting = false;
+async function submitForm() {
+  if (isSubmitting) return; // prevent duplicate submission from double-click
+  isSubmitting = true;
+  const proj = document.getElementById('f_project').value;
+  const date = document.getElementById('f_date').value;
+  const engineer = document.getElementById('f_engineer').value.trim();
+  const workDone = document.getElementById('f_workDone').value.trim();
+  const signName = document.getElementById('f_signName').value.trim();
+  const errMsg = document.getElementById('errMsg');
+
+  if (!proj || !date || !engineer || !workDone || !signName) {
+    errMsg.classList.add('show');
+    return;
+  }
+  errMsg.classList.remove('show');
+
+  const submitBtn = document.getElementById('submitBtn');
+  const submitTxt = document.getElementById('submitTxt');
+  submitBtn.disabled = true;
+  submitBtn.style.background = '#1A4A7A';
+  submitTxt.textContent = '⏳  Submitting...';
+
+  const data = {
+    project: proj,
+    date: date,
+    engineer: engineer,
+    planned: counts.planned,
+    actual: counts.actual,
+    hours: counts.hours,
+    weather: selectedWx || 'Not specified',
+    weatherImpact: selectedWxImpact || 'Not answered',
+    weatherDetail: document.getElementById('f_weatherDetail').value,
+    delays: getDelays(),
+    hoursLost: document.getElementById('f_hoursLost').value || '0',
+    workDone: workDone,
+    progStatus: selectedProg || 'Not specified',
+    targetMet: selectedTarget || 'Not answered',
+    targetNotes: document.getElementById('f_targetNotes')?.value || '',
+    tomorrow: document.getElementById('f_tomorrow').value,
+    safetyIssues: getSafetyIssues(),
+    safetyDetail: document.getElementById('f_safetyDetail').value || '',
+    materials: document.getElementById('f_materials').value || 'None',
+    plant: document.getElementById('f_plant').value || 'None',
+    instructions: document.getElementById('f_instructions')?.value || 'None',
+    otherNotes: document.getElementById('f_otherNotes').value || '',
+    signName: signName,
+    timesheetSummary: getTimesheetSummary(),
+    otReason: document.getElementById('f_otReason')?.value || '',
+    hrIssue: document.getElementById('f_hrIssue')?.value || '',
+    tasksTomorrow: getTasksSummary(),
+    materialsNeeded: document.getElementById('f_materialsNeeded')?.value || '',
+    incidentReport: getIncidentSummary(),
+  };
+
+  // Submit to Google Sheets using iframe ONLY (single submission, no duplicates)
+  if (SHEET_URL) {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(data).forEach(([k, v]) => params.append(k, String(v)));
+      const reqUrl = SHEET_URL + '?' + params.toString();
+      
+      // Single hidden iframe submission - reliable, no duplicate
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = reqUrl;
+      document.body.appendChild(iframe);
+      
+      // Clean up iframe after 8 seconds
+      setTimeout(() => { 
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe); 
+      }, 8000);
+    } catch (err) {
+      console.log('Submit note:', err);
     }
+  }
 
-    sheet.appendRow([
-      new Date().toLocaleString('en-GB'),
-      p.project || '', p.date || '', p.engineer || '',
-      p.planned || '0', p.actual || '0', p.hours || '0',
-      p.weather || '', p.weatherImpact || '', p.weatherDetail || '',
-      p.delays || '', p.hoursLost || '0',
-      p.workDone || '', p.progStatus || '', p.targetMet || '', p.targetNotes || '',
-      p.tomorrow || '', p.safetyIssues || '', p.safetyDetail || '',
-      p.materials || '', p.plant || '', p.instructions || '',
-      p.otherNotes || '', p.signName || '', p.timesheetSummary || '', p.otReason || '', p.hrIssue || '', p.tasksTomorrow || '', p.materialsNeeded || '', p.incidentReport || ''
-    ]);
+  // Show success
+  document.getElementById('formWrap').style.display = 'none';
+  document.getElementById('dots').style.display = 'none';
+  document.getElementById('progFill').style.width = '100%';
+  const _d = date ? new Date(date + 'T12:00:00') : null;
+  const d = _d ? _d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
+  const dSw = _d ? _d.toLocaleDateString('sw', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
+  const progColor = selectedProg.toLowerCase().includes('track') ? '#1A5C35' : selectedProg.toLowerCase().includes('risk') ? '#B45309' : '#991B1B';
+  document.getElementById('successMeta').innerHTML = `
+    <strong style="font-size:15px;color:#0B1F3A">${proj}</strong><br>
+    <span style="color:#64748B">${d}</span><br><br>
+    👷 Engineer: <strong>${engineer}</strong><br>
+    🔨 Workers on site: <strong>${counts.actual}</strong> (${counts.planned} planned)<br>
+    📊 Programme: <strong style="color:${progColor}">${selectedProg || 'Not specified'}</strong><br>
+    ✅ Submitted by: <strong>${signName}</strong><br>
+    🕐 Time: <strong>${new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'})} EAT</strong>`;
+  document.getElementById('successScreen').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-    sheet.autoResizeColumns(1, 32);
-    sendEmail(p);
-
-    return ContentService
-      .createTextOutput(JSON.stringify({status: 'success'}))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch(err) {
-    Logger.log('ERROR: ' + err.toString());
-    return ContentService
-      .createTextOutput(JSON.stringify({status: 'error', message: err.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
+// NOTIFICATIONS & REMINDERS
+async function requestNotifications() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') scheduleReminder();
+  } else if (Notification.permission === 'granted') {
+    scheduleReminder();
   }
 }
 
-function sendEmail(p) {
-  try {
-    var project = p.project || 'Unknown Project';
-    var engineer = p.engineer || 'Unknown';
-    var date = p.date || '';
-    var progStatus = p.progStatus || 'Not specified';
-    var workDone = p.workDone || 'Not recorded';
-    var actual = p.actual || '0';
-    var planned = p.planned || '0';
-    var delays = p.delays || 'None';
-    var hoursLost = p.hoursLost || '0';
-    var safety = p.safetyIssues || 'None';
-    var safetyDetail = p.safetyDetail || '';
-    var tomorrow = p.tomorrow || '';
-    var signName = p.signName || engineer;
-    var timeNow = new Date().toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
-
-    var statusColor = '#1A5C35';
-    if (progStatus.toLowerCase().indexOf('risk') > -1) { statusColor = '#B45309'; }
-    if (progStatus.toLowerCase().indexOf('delay') > -1) { statusColor = '#991B1B'; }
-
-    var safetyAlert = (safety !== 'None' && safety !== '' && safety !== 'none');
-    var incidentReport = p.incidentReport || 'None';
-    var incidentAlert = (incidentReport !== 'None' && incidentReport !== '' && incidentReport.includes('TYPE:'));
-    var subject = '[BEL] Daily Diary - ' + project + ' - ' + date;
-    if (safetyAlert) { subject = 'SAFETY FLAG - ' + subject; }
-    if (incidentAlert) { subject = 'INCIDENT REPORT - ' + subject; }
-
-    var body = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">'
-      + '<div style="background:#0B1F3A;padding:24px;border-radius:8px 8px 0 0;">'
-      + '<div style="color:#C9A84C;font-size:11px;font-weight:bold;text-transform:uppercase;margin-bottom:6px;">Benchmark Engineering Limited</div>'
-      + '<div style="color:#fff;font-size:20px;font-weight:bold;">Daily Site Diary</div>'
-      + '<div style="color:rgba(255,255,255,0.6);font-size:13px;margin-top:4px;">' + project + ' - ' + date + '</div>'
-      + '</div>'
-      + '<div style="background:' + statusColor + ';padding:12px 24px;">'
-      + '<span style="color:#fff;font-size:14px;font-weight:bold;">Programme Status: ' + progStatus + '</span>'
-      + '</div>'
-      + (safetyAlert ? '<div style="background:#FEE2E2;border-left:4px solid #991B1B;padding:14px 24px;">'
-        + '<div style="color:#991B1B;font-weight:bold;">SAFETY ISSUE FLAGGED</div>'
-        + '<div style="color:#7F1D1D;font-size:12px;">' + safety + '</div>'
-        + (safetyDetail ? '<div style="color:#7F1D1D;font-size:12px;">' + safetyDetail + '</div>' : '')
-        + '</div>' : '')
-      + '<div style="background:#F8F7F4;padding:24px;border:1px solid #E8E2D9;border-top:none;">'
-      + '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">'
-      + '<tr>'
-      + '<td style="background:#fff;border:1px solid #E8E2D9;border-radius:6px;padding:12px;width:48%;">'
-      + '<div style="font-size:10px;font-weight:bold;color:#64748B;text-transform:uppercase;margin-bottom:4px;">Engineer</div>'
-      + '<div style="font-size:14px;font-weight:600;">' + engineer + '</div></td>'
-      + '<td style="width:4%;"></td>'
-      + '<td style="background:#fff;border:1px solid #E8E2D9;border-radius:6px;padding:12px;width:48%;">'
-      + '<div style="font-size:10px;font-weight:bold;color:#64748B;text-transform:uppercase;margin-bottom:4px;">Workers on Site</div>'
-      + '<div style="font-size:14px;font-weight:600;">' + actual + ' actual / ' + planned + ' planned</div></td>'
-      + '</tr></table>'
-      + '<div style="background:#fff;border:1px solid #E8E2D9;border-radius:6px;padding:14px;margin-bottom:12px;">'
-      + '<div style="font-size:10px;font-weight:bold;color:#64748B;text-transform:uppercase;margin-bottom:6px;">Work Carried Out Today</div>'
-      + '<div style="font-size:13px;">' + workDone + '</div></div>'
-      + '<div style="background:#fff;border:1px solid #E8E2D9;border-radius:6px;padding:14px;margin-bottom:12px;">'
-      + '<div style="font-size:10px;font-weight:bold;color:#64748B;text-transform:uppercase;margin-bottom:6px;">Delays</div>'
-      + '<div style="font-size:13px;">' + delays + '</div>'
-      + (hoursLost && hoursLost !== '0' ? '<div style="font-size:12px;color:#B45309;">Hours lost: ' + hoursLost + '</div>' : '')
-      + '</div>'
-      + (tomorrow ? '<div style="background:#fff;border:1px solid #E8E2D9;border-radius:6px;padding:14px;margin-bottom:12px;">'
-        + '<div style="font-size:10px;font-weight:bold;color:#64748B;text-transform:uppercase;margin-bottom:6px;">Tomorrows Plan</div>'
-        + '<div style="font-size:13px;">' + tomorrow + '</div></div>' : '')
-      + '<div style="text-align:center;padding-top:16px;border-top:1px solid #E8E2D9;">'
-      + '<div style="font-size:11px;color:#64748B;">Submitted by ' + signName + ' at ' + timeNow + ' EAT</div>'
-      + '<a href="https://warithsaid23-ops.github.io/benchmark-diary/ceo.html" style="display:inline-block;margin-top:10px;padding:8px 20px;background:#0B1F3A;color:#fff;text-decoration:none;border-radius:6px;font-size:12px;font-weight:600;">Open CEO Dashboard</a>'
-      + '</div></div></div>';
-
-    for (var i = 0; i < CEO_EMAILS.length; i++) {
-      GmailApp.sendEmail(CEO_EMAILS[i], subject, 'Please view in HTML format.', {
-        htmlBody: body,
-        name: COMPANY_NAME + ' - Site Diary System'
+function scheduleReminder() {
+  const now = new Date();
+  const r1 = new Date(); r1.setHours(18,30,0,0);
+  const r2 = new Date(); r2.setHours(19,0,0,0);
+  const ms1 = r1 - now;
+  const ms2 = r2 - now;
+  if (ms1 > 0) {
+    setTimeout(() => {
+      new Notification('Benchmark Engineering', {
+        body: 'Diari inahitajika kwa dakika 30! / Diary due in 30 minutes!',
+        tag: 'bel-reminder'
       });
-    }
-    Logger.log('Emails sent successfully to ' + CEO_EMAILS.length + ' recipients');
-
-  } catch(emailErr) {
-    Logger.log('Email error: ' + emailErr.toString());
+    }, ms1);
+  }
+  if (ms2 > 0) {
+    setTimeout(() => {
+      new Notification('Benchmark Engineering - DEADLINE', {
+        body: 'Saa moja usiku! Tuma diari yako sasa! / 7PM deadline - submit now!',
+        tag: 'bel-deadline'
+      });
+    }, ms2);
   }
 }
 
-function doPost(e) {
-  return doGet(e);
+function showInstallPrompt() {
+  const el = document.getElementById('installPrompt');
+  if (el) el.style.display = 'block';
 }
 
-function testEmail() {
-  GmailApp.sendEmail('warithsaid23@gmail.com', 'BEL Test', 'Test from Benchmark Apps Script');
-  Logger.log('Test email sent');
+requestNotifications();requestNotifications();
+
+// ── PERMANENT STAFF LIST ───────────────────────────────────
+const STAFF = [
+  'Mahir Said Ali','Sheikhan S Mohammed','Abdul-Halim Zahran',
+  'Engineer 1','Engineer 2','Engineer 3',
+  'Foreman 1','Foreman 2','Labourer Lead 1','Labourer Lead 2'
+];
+
+let timesheetData = {};
+
+function buildWorkerList() {
+  const container = document.getElementById('workerList');
+  if (!container) return;
+  container.innerHTML = '';
+  STAFF.forEach((name, i) => {
+    timesheetData[i] = timesheetData[i] || {hours: 8, ot: 0, absent: false};
+    const row = document.createElement('div');
+    row.className = 'worker-row';
+    row.innerHTML = \`
+      <div class="worker-name">\${name}</div>
+      <input type="number" min="0" max="12" step="0.5" value="\${timesheetData[i].hours}"
+        id="ts_h_\${i}" onchange="updateTS(\${i},'hours',this.value)" \${timesheetData[i].absent?'disabled':''}>
+      <input type="number" min="0" max="6" step="0.5" value="\${timesheetData[i].ot}"
+        id="ts_ot_\${i}" onchange="updateTS(\${i},'ot',this.value)" \${timesheetData[i].absent?'disabled':''}>
+      <input type="checkbox" \${timesheetData[i].absent?'checked':''} 
+        onchange="toggleAbsent(\${i},this.checked)" style="width:18px;height:18px;accent-color:var(--red);cursor:pointer">
+    \`;
+    container.appendChild(row);
+  });
+  updateTotals();
 }
+
+function updateTS(idx, field, val) {
+  timesheetData[idx][field] = parseFloat(val) || 0;
+  updateTotals();
+}
+
+function toggleAbsent(idx, absent) {
+  timesheetData[idx].absent = absent;
+  const hInput = document.getElementById('ts_h_' + idx);
+  const otInput = document.getElementById('ts_ot_' + idx);
+  if (hInput) hInput.disabled = absent;
+  if (otInput) otInput.disabled = absent;
+  updateTotals();
+}
+
+function updateTotals() {
+  let totalH = 0, totalOT = 0, totalAbsent = 0;
+  Object.values(timesheetData).forEach(d => {
+    if (d.absent) { totalAbsent++; }
+    else { totalH += d.hours || 0; totalOT += d.ot || 0; }
+  });
+  const th = document.getElementById('totalHours');
+  const tot = document.getElementById('totalOT');
+  const ta = document.getElementById('totalAbsent');
+  if (th) th.textContent = totalH;
+  if (tot) tot.textContent = totalOT;
+  if (ta) ta.textContent = totalAbsent;
+}
+
+function getTimesheetSummary() {
+  const lines = [];
+  STAFF.forEach((name, i) => {
+    const d = timesheetData[i] || {};
+    if (d.absent) { lines.push(name + ': ABSENT'); }
+    else { lines.push(name + ': ' + (d.hours||8) + 'hrs' + (d.ot > 0 ? ' + ' + d.ot + 'OT' : '')); }
+  });
+  return lines.join(' | ');
+}
+
+// Build worker list when reaching page 7
+const origNext = next;
+function next(n) {
+  if (n === 7) { setTimeout(buildWorkerList, 100); }
+  if (n === 8) { setTimeout(buildTaskCards, 100); }
+  origNext(n);
+}
+
+// ── TASK CARDS ──────────────────────────────────────────────
+let taskPriorities = ['','','',''];
+const TASK_COUNT = 4;
+
+function buildTaskCards() {
+  const container = document.getElementById('taskCards');
+  if (!container || container.children.length > 0) return;
+  for (let i = 0; i < TASK_COUNT; i++) {
+    const div = document.createElement('div');
+    div.className = 'task-card';
+    div.innerHTML = \`
+      <div class="task-hdr">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="task-num">\${i+1}</div>
+          <span style="font-size:13px;font-weight:600;color:var(--navy)">Task \${i+1}</span>
+        </div>
+        <div class="priority-btns">
+          <button class="priority-btn high" onclick="setTaskPriority(\${i},'High',this)">High</button>
+          <button class="priority-btn med" onclick="setTaskPriority(\${i},'Medium',this)">Med</button>
+          <button class="priority-btn low" onclick="setTaskPriority(\${i},'Low',this)">Low</button>
+        </div>
+      </div>
+      <input type="text" id="task_desc_\${i}" placeholder="Task description — what needs to be done and where"
+        style="margin-bottom:8px">
+      <input type="text" id="task_assign_\${i}" placeholder="Assign to — name or trade">
+    \`;
+    container.appendChild(div);
+  }
+}
+
+function setTaskPriority(idx, level, btn) {
+  taskPriorities[idx] = level;
+  btn.closest('.priority-btns').querySelectorAll('.priority-btn').forEach(b => b.classList.remove('on'));
+  const cls = level === 'High' ? 'high' : level === 'Medium' ? 'med' : 'low';
+  btn.classList.add('on');
+}
+
+function getTasksSummary() {
+  const tasks = [];
+  for (let i = 0; i < TASK_COUNT; i++) {
+    const desc = document.getElementById('task_desc_' + i)?.value?.trim();
+    const assign = document.getElementById('task_assign_' + i)?.value?.trim();
+    const priority = taskPriorities[i] || 'Normal';
+    if (desc) tasks.push('[' + priority + '] ' + desc + (assign ? ' → ' + assign : ''));
+  }
+  return tasks.join(' | ') || 'None';
+}
+
+// ── INCIDENT HELPERS ──────────────────────────────────────
+function selectIncType(btn, type) {
+  btn.closest('.incident-type-grid').querySelectorAll('.inc-type-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('f_incidentType').value = type;
+}
+
+function selectSeverity(btn, level) {
+  btn.closest('.severity-row').querySelectorAll('.sev-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('f_severity').value = level;
+}
+
+function getIncidentSummary() {
+  const type = document.getElementById('f_incidentType')?.value || '';
+  const severity = document.getElementById('f_severity')?.value || '';
+  const desc = document.getElementById('f_incidentDesc')?.value?.trim() || '';
+  const action = document.getElementById('f_incidentAction')?.value?.trim() || '';
+  const time = document.getElementById('f_incidentTime')?.value || '';
+  const location = document.getElementById('f_incidentLocation')?.value?.trim() || '';
+  const people = document.getElementById('f_incidentPeople')?.value?.trim() || '';
+  if (!type && !desc) return 'None';
+  return 'TYPE:' + type + ' SEVERITY:' + severity + ' TIME:' + time + 
+         ' LOCATION:' + location + ' PEOPLE:' + people + 
+         ' DESC:' + desc + ' ACTION:' + action;
+}
+
+</script>
+</body>
+</html>
