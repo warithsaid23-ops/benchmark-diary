@@ -775,9 +775,9 @@ select{
     <div class="lbl">Overall programme status <span class="req">★</span></div>
     <div class="lbl-sw">Hali ya jumla ya mpango</div>
     <div class="rag">
-      <button class="rag-btn g" onclick="ragPick(this,'green')">✓ On Track<small>Kwenye Ratiba</small></button>
-      <button class="rag-btn a" onclick="ragPick(this,'amber')">⚠ At Risk<small>Iko Hatarini</small></button>
-      <button class="rag-btn r" onclick="ragPick(this,'red')">✗ Delayed<small>Imechelewa</small></button>
+      <button class="rag-btn g" data-val="On Track" onclick="ragPick(this,'green')">✓ On Track<small>Kwenye Ratiba</small></button>
+      <button class="rag-btn a" data-val="At Risk" onclick="ragPick(this,'amber')">⚠ At Risk<small>Iko Hatarini</small></button>
+      <button class="rag-btn r" data-val="Delayed" onclick="ragPick(this,'red')">✗ Delayed<small>Imechelewa</small></button>
     </div>
   </div>
 
@@ -1142,6 +1142,8 @@ function next(n) {
   document.getElementById('dot' + cur).classList.add('active');
   updateProg();
   if (cur === 6) showInstallPrompt();
+  if (cur === 7) setTimeout(buildWorkerList, 100);
+  if (cur === 8) setTimeout(buildTaskCards, 100);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1167,7 +1169,7 @@ function chk(el) {
 function ragPick(btn, color) {
   btn.closest('.rag').querySelectorAll('.rag-btn').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  selectedProg = btn.textContent.trim().split('\n')[0];
+  selectedProg = btn.getAttribute('data-val') || btn.textContent.trim().split('\n')[0].replace(/[✓⚠✗]\s*/,'').trim();
 }
 
 function sPick(btn, val, key) {
@@ -1255,7 +1257,7 @@ async function submitForm() {
 
   const data = {
     project: proj,
-    date: date,
+    date: date || new Date().toISOString().split('T')[0],
     engineer: engineer,
     planned: counts.planned,
     actual: counts.actual,
@@ -1289,6 +1291,8 @@ async function submitForm() {
   if (SHEET_URL) {
     try {
       const params = new URLSearchParams();
+      // Add unique submission token to prevent duplicate processing
+      data.submissionId = Date.now() + '_' + Math.random().toString(36).substr(2,6);
       Object.entries(data).forEach(([k, v]) => params.append(k, String(v)));
       const reqUrl = SHEET_URL + '?' + params.toString();
       
@@ -1308,6 +1312,7 @@ async function submitForm() {
   }
 
   // Show success
+  isSubmitting = false; // reset lock after successful submission
   document.getElementById('formWrap').style.display = 'none';
   document.getElementById('dots').style.display = 'none';
   document.getElementById('progFill').style.width = '100%';
@@ -1369,10 +1374,14 @@ function showInstallPrompt() {
 requestNotifications();requestNotifications();
 
 // ── PERMANENT STAFF LIST ───────────────────────────────────
+// UPDATE THESE NAMES with actual staff names when available
+// Current version uses role-based placeholders
 const STAFF = [
-  'Mahir Said Ali','Sheikhan S Mohammed','Abdul-Halim Zahran',
-  'Engineer 1','Engineer 2','Engineer 3',
-  'Foreman 1','Foreman 2','Labourer Lead 1','Labourer Lead 2'
+  'Site Engineer 1','Site Engineer 2',
+  'Site Foreman 1','Site Foreman 2',
+  'Safety Officer',
+  'Plant Operator 1','Plant Operator 2',
+  'Mason Lead','Carpenter Lead','Steel Fixer Lead'
 ];
 
 let timesheetData = {};
@@ -1438,12 +1447,7 @@ function getTimesheetSummary() {
 }
 
 // Build worker list when reaching page 7
-const origNext = next;
-function next(n) {
-  if (n === 7) { setTimeout(buildWorkerList, 100); }
-  if (n === 8) { setTimeout(buildTaskCards, 100); }
-  origNext(n);
-}
+// next() patched inline below
 
 // ── TASK CARDS ──────────────────────────────────────────────
 let taskPriorities = ['','','',''];
