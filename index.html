@@ -1394,15 +1394,15 @@ function buildWorkerList() {
     timesheetData[i] = timesheetData[i] || {hours: 8, ot: 0, absent: false};
     const row = document.createElement('div');
     row.className = 'worker-row';
-    row.innerHTML = \`
-      <div class="worker-name">\${name}</div>
-      <input type="number" min="0" max="12" step="0.5" value="\${timesheetData[i].hours}"
-        id="ts_h_\${i}" onchange="updateTS(\${i},'hours',this.value)" \${timesheetData[i].absent?'disabled':''}>
-      <input type="number" min="0" max="6" step="0.5" value="\${timesheetData[i].ot}"
-        id="ts_ot_\${i}" onchange="updateTS(\${i},'ot',this.value)" \${timesheetData[i].absent?'disabled':''}>
-      <input type="checkbox" \${timesheetData[i].absent?'checked':''} 
-        onchange="toggleAbsent(\${i},this.checked)" style="width:18px;height:18px;accent-color:var(--red);cursor:pointer">
-    \`;
+    row.innerHTML = `
+      <div class="worker-name">${name}</div>
+      <input type="number" min="0" max="12" step="0.5" value="${timesheetData[i].hours}"
+        id="ts_h_${i}" onchange="updateTS(${i},'hours',this.value)" ${timesheetData[i].absent?'disabled':''}>
+      <input type="number" min="0" max="6" step="0.5" value="${timesheetData[i].ot}"
+        id="ts_ot_${i}" onchange="updateTS(${i},'ot',this.value)" ${timesheetData[i].absent?'disabled':''}>
+      <input type="checkbox" ${timesheetData[i].absent?'checked':''} 
+        onchange="toggleAbsent(${i},this.checked)" style="width:18px;height:18px;accent-color:var(--red);cursor:pointer">
+    `;
     container.appendChild(row);
   });
   updateTotals();
@@ -1459,22 +1459,22 @@ function buildTaskCards() {
   for (let i = 0; i < TASK_COUNT; i++) {
     const div = document.createElement('div');
     div.className = 'task-card';
-    div.innerHTML = \`
+    div.innerHTML = `
       <div class="task-hdr">
         <div style="display:flex;align-items:center;gap:8px">
-          <div class="task-num">\${i+1}</div>
-          <span style="font-size:13px;font-weight:600;color:var(--navy)">Task \${i+1}</span>
+          <div class="task-num">${i+1}</div>
+          <span style="font-size:13px;font-weight:600;color:var(--navy)">Task ${i+1}</span>
         </div>
         <div class="priority-btns">
-          <button class="priority-btn high" onclick="setTaskPriority(\${i},'High',this)">High</button>
-          <button class="priority-btn med" onclick="setTaskPriority(\${i},'Medium',this)">Med</button>
-          <button class="priority-btn low" onclick="setTaskPriority(\${i},'Low',this)">Low</button>
+          <button class="priority-btn high" onclick="setTaskPriority(${i},'High',this)">High</button>
+          <button class="priority-btn med" onclick="setTaskPriority(${i},'Medium',this)">Med</button>
+          <button class="priority-btn low" onclick="setTaskPriority(${i},'Low',this)">Low</button>
         </div>
       </div>
-      <input type="text" id="task_desc_\${i}" placeholder="Task description — what needs to be done and where"
+      <input type="text" id="task_desc_${i}" placeholder="Task description — what needs to be done and where"
         style="margin-bottom:8px">
-      <input type="text" id="task_assign_\${i}" placeholder="Assign to — name or trade">
-    \`;
+      <input type="text" id="task_assign_${i}" placeholder="Assign to — name or trade">
+    `;
     container.appendChild(div);
   }
 }
