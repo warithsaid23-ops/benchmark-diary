@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BEL — System Admin</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F2340">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -156,9 +158,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="field">
         <label>Apps Script Web App URL</label>
         <input type="text" id="formUrl" placeholder="https://script.google.com/macros/s/...">
-        <div class="hint">From: Google Sheet → Extensions → Apps Script → Deploy → Manage deployments → Web App URL</div>
+        <div class="hint">To change the endpoint, update SHEET_URL in index.html and the displayed URL in admin.html, then publish both files. Browser settings do not change deployment URLs.</div>
       </div>
-      <button class="btn-primary" id="saveFormBtn" onclick="saveFormUrl()">Save Connection</button>
+      <button class="btn-primary" id="saveFormBtn" onclick="saveFormUrl()">Copy configured URL</button>
     </div>
   </div>
 
@@ -177,7 +179,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <input type="text" id="ceoUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
         <div class="hint">From: Google Sheet → File → Share → Publish to web → Sheet1 → CSV → Publish → copy URL</div>
       </div>
-      <button class="btn-primary" id="saveCeoBtn" onclick="saveCeoUrl()">Save CEO Dashboard Connection</button>
+      <button class="btn-primary" id="saveCeoBtn" onclick="saveCeoUrl()">Copy configured CSV URL</button>
     </div>
   </div>
 
@@ -195,14 +197,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="check-item" onclick="toggleCheck(this)" id="chk1">
           <div class="check-box"></div>
           <div class="check-label">
-            <strong>Apps Script URL saved above</strong>
+            <strong>Apps Script URL configured in source</strong>
             <span>Form submissions will reach Google Sheets</span>
           </div>
         </div>
         <div class="check-item" onclick="toggleCheck(this)" id="chk2">
           <div class="check-box"></div>
           <div class="check-label">
-            <strong>CEO Dashboard CSV URL saved above</strong>
+            <strong>CEO Dashboard CSV URL configured in source</strong>
             <span>Dashboard will show submissions on all devices</span>
           </div>
         </div>
@@ -302,11 +304,11 @@ Submission is mandatory. Failure to submit by 7pm will be reported to the Projec
       <div class="section-hd-num" style="background:var(--red)">!</div>
       <div class="section-hd-text">
         <h2>Reset</h2>
-        <p>Clear all saved URLs — only if starting fresh</p>
+        <p>Reset the checklist on this device</p>
       </div>
     </div>
     <div class="section-body">
-      <button class="btn-danger" onclick="clearAll()">🗑 Clear all saved URLs and reset</button>
+      <button class="btn-danger" onclick="clearAll()">Reset checklist</button>
     </div>
   </div>
 
@@ -317,8 +319,8 @@ const FORM_KEY = 'BEL_SHEET_URL';
 const CEO_KEY  = 'BEL_CEO_SHEET';
 
 // Load saved
-const savedForm = localStorage.getItem(FORM_KEY) || '';
-const savedCeo  = localStorage.getItem(CEO_KEY)  || '';
+const savedForm = 'https://script.google.com/macros/s/AKfycbwQcIbkY1Hq6Hb7sEQp23Q6Uv6GQPMOlh59VLKyA5BhIGaICtXFXwMfg4GeOPe4ow8nnw/exec';
+const savedCeo = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTS17qI7XxT_8dNh_h-L55ettk2nhbYAB4ECHMcEiHDIZnTHY1sxHUkg8AYb9rGotPrMQDGU_gH1fCK/pub?gid=0&single=true&output=csv';
 
 function init() {
   if(savedForm) {
@@ -339,52 +341,13 @@ function init() {
 }
 
 function updateStatus() {
-  const card = document.getElementById('statusCard');
-  const title = document.getElementById('statusTitle');
-  const sub = document.getElementById('statusSub');
-  
-  if(savedForm && savedCeo) {
-    card.className = 'status-card connected';
-    title.textContent = '✓ System connected and ready';
-    sub.textContent = 'Apps Script URL saved · CEO Dashboard URL saved · Ready for trial';
-  } else if(savedForm) {
-    card.className = 'status-card disconnected';
-    title.textContent = '⚠ Partially connected';
-    sub.textContent = 'Form → Sheets is connected · CEO Dashboard URL missing (Step 2)';
-  } else {
-    card.className = 'status-card disconnected';
-    title.textContent = '✗ Not connected';
-    sub.textContent = 'Complete Steps 1 and 2 below before trialling';
-  }
+  document.getElementById('statusCard').className = 'status-card disconnected';
+  document.getElementById('statusTitle').textContent = 'Deployment URLs configured — delivery unverified';
+  document.getElementById('statusSub').textContent = 'Confirm a real diary appears in the sheet and dashboard. This page does not test submission or email delivery.';
+  ['formUrl','ceoUrl'].forEach(id => document.getElementById(id).readOnly = true);
 }
-
-function saveFormUrl() {
-  const url = document.getElementById('formUrl').value.trim();
-  if(!url || !url.includes('script.google.com')) {
-    alert('Please paste a valid Google Apps Script Web App URL.\nIt should start with: https://script.google.com/macros/s/');
-    return;
-  }
-  localStorage.setItem(FORM_KEY, url);
-  document.getElementById('formUrl').classList.add('has-value');
-  const btn = document.getElementById('saveFormBtn');
-  btn.textContent = '✓ Saved!'; btn.classList.add('saved');
-  setTimeout(() => { btn.textContent = 'Save Connection'; btn.classList.remove('saved'); }, 2500);
-  updateStatus();
-}
-
-function saveCeoUrl() {
-  const url = document.getElementById('ceoUrl').value.trim();
-  if(!url || !url.includes('docs.google.com')) {
-    alert('Please paste a valid Google Sheets publish URL.\nGet it from: File → Share → Publish to web → CSV');
-    return;
-  }
-  localStorage.setItem(CEO_KEY, url);
-  document.getElementById('ceoUrl').classList.add('has-value');
-  const btn = document.getElementById('saveCeoBtn');
-  btn.textContent = '✓ Saved!'; btn.classList.add('saved');
-  setTimeout(() => { btn.textContent = 'Save CEO Dashboard Connection'; btn.classList.remove('saved'); }, 2500);
-  updateStatus();
-}
+function saveFormUrl() { navigator.clipboard.writeText(savedForm).catch(() => alert('Select and copy the URL above.')); }
+function saveCeoUrl() { navigator.clipboard.writeText(savedCeo).catch(() => alert('Select and copy the URL above.')); }
 
 function toggleCheck(el) {
   el.classList.toggle('done');
@@ -399,11 +362,12 @@ function saveChecklist() {
   document.querySelectorAll('.check-item').forEach(item => {
     state[item.id] = item.classList.contains('done');
   });
-  localStorage.setItem('BEL_CHECKLIST', JSON.stringify(state));
+  try { localStorage.setItem('BEL_CHECKLIST', JSON.stringify(state)); } catch (_) { /* Checklist remains usable for this visit. */ }
 }
 
 function loadChecklist() {
-  const saved = JSON.parse(localStorage.getItem('BEL_CHECKLIST') || '{}');
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('BEL_CHECKLIST') || '{}') || {}; } catch (_) { saved = {}; }
   Object.keys(saved).forEach(id => {
     if(saved[id]) {
       const el = document.getElementById(id);
@@ -434,15 +398,15 @@ function copyMsg() {
 }
 
 function clearAll() {
-  if(confirm('This will clear all saved URLs and reset the checklist. Are you sure?\n\nUta-clear URL zote zilizohifadhiwa. Una uhakika?')) {
-    localStorage.removeItem(FORM_KEY);
-    localStorage.removeItem(CEO_KEY);
-    localStorage.removeItem('BEL_CHECKLIST');
-    location.reload();
+  if(confirm('Reset the checklist on this device? / Weka upya orodha kwenye kifaa hiki?')) {
+    try { localStorage.removeItem('BEL_CHECKLIST'); } catch (_) {}
+    document.querySelectorAll('.check-item').forEach(el => { el.classList.remove('done'); el.querySelector('.check-box').textContent = ''; });
+    updateChecklistStatus();
   }
 }
 
 init();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
 </html>

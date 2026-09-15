@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>BEL — Daily Site Diary</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F2340">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
 
@@ -431,6 +433,18 @@ select{
 }
 .error-msg.show{display:block}
 
+/* ── CONNECTION, DRAFT AND FIELD STATUS ── */
+#appStatus{
+  padding:7px 16px;text-align:center;font-size:12px;font-weight:600;
+  background:#ECFDF5;color:var(--green);border-bottom:1px solid rgba(255,255,255,0.12);
+}
+#appStatus.offline,#appStatus.pending{background:#FFFBEB;color:var(--amber)}
+#appStatus.failed{background:#FEF2F2;color:var(--red)}
+#appStatus.saved{background:#ECFDF5;color:var(--success)}
+.field-invalid{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(185,28,28,0.12)!important;background:#FFF7F7!important}
+.choices.field-invalid,.choice.field-invalid,.rag-btn.field-invalid,.safety-item.field-invalid,.incident-type-grid.field-invalid,.severity-row.field-invalid{border-color:var(--red)!important;background:#FFF7F7!important}
+.draft-note{font-size:11px;color:var(--muted);margin-top:6px}
+
 /* ── SETUP BANNER ───────────────────────────────────────── */
 .setup-banner{
   background:linear-gradient(135deg,#1E3A5F,#2D5A8E);
@@ -481,6 +495,7 @@ select{
 }
 .sheet-config input{font-size:13px;padding:9px 12px}
 .sheet-config .hint{font-size:11px;color:var(--muted);margin-top:5px}
+ #setupGuide,.setup-banner,.sheet-config{display:none!important}
 .save-url-btn{
   margin-top:8px;padding:8px 16px;
   background:var(--navy);border:none;border-radius:6px;
@@ -588,6 +603,7 @@ select{
     <span class="topbar-name">Benchmark Engineering</span>
   </div>
   <div class="topbar-right">
+    <div id="appStatus" role="status" aria-live="polite">Online / Mtandaoni</div>
     <div class="deadline-tag">
       <span class="deadline-dot"></span>
       7:00 PM · Saa moja usiku
@@ -848,7 +864,7 @@ select{
 
   <div class="nav">
     <button class="btn-back" onclick="next(4)">← Back</button>
-    <button class="btn-next" onclick="next(6)">Next → <span style="opacity:0.6;font-size:12px">Sign off</span></button>
+    <button class="btn-next" onclick="next(7)">Next → <span style="opacity:0.6;font-size:12px">Timesheet</span></button>
   </div>
 </div>
 
@@ -897,7 +913,7 @@ select{
   </div>
 
   <div class="nav">
-    <button class="btn-back" onclick="next(6)">← Back</button>
+    <button class="btn-back" onclick="next(5)">← Back</button>
     <button class="btn-next" onclick="next(8)">Next → <span style="opacity:0.6;font-size:12px">Tasks</span></button>
   </div>
 </div>
@@ -1016,14 +1032,14 @@ select{
   </div>
 
   <div class="card">
-    <div class="lbl">Site photos (optional)</div>
-    <div class="lbl-sw">Picha za tovuti — si lazima, upeo 5</div>
+    <div class="lbl">Site photos (select 1–5)</div>
+    <div class="lbl-sw">Picha za tovuti — chagua picha 1–5</div>
     <div class="upload-area" onclick="document.getElementById('photoIn').click()">
       <div class="upload-icon">📷</div>
       <div class="upload-txt"><strong>Tap to add photos</strong> from camera or gallery<br><em>Gusa kuongeza picha kutoka kamera au gallery</em></div>
       <input type="file" id="photoIn" accept="image/*" multiple style="display:none" onchange="showPreviews(this)">
     </div>
-    <div class="photo-preview" id="photoPrev"></div>
+    <div class="photo-preview" id="photoPrev"></div><p style="font-size:12px">Photos are compressed and kept in this phone draft. Send them to your project manager separately until photo storage is connected.<br><em>Picha zinapunguzwa ukubwa na kuhifadhiwa kwenye rasimu ya simu. Tuma picha kwa meneja kando hadi uhifadhi wa picha uunganishwe.</em></p>
   </div>
 
   <div class="card">
@@ -1046,7 +1062,7 @@ select{
     <div class="lbl-sw">Jina lako — sahihi ya kidijitali</div>
     <input type="text" id="f_signName" placeholder="Type your full name / Andika jina lako kamili">
 
-    <div class="error-msg" id="errMsg">⚠ Please fill in Project, Date, Your Name, Work Done, and Sign-Off Name before submitting.<br><em>⚠ Tafadhali jaza Mradi, Tarehe, Jina Lako, Kazi Iliyofanywa, na Jina la Kuthibitisha.</em></div>
+    <div class="error-msg" id="errMsg" role="alert"></div>
   </div>
 
   <div class="nav">
@@ -1062,12 +1078,8 @@ select{
 <!-- SUCCESS SCREEN -->
 <div class="success" id="successScreen">
   <div class="success-icon">✅</div>
-  <div class="success-title">Diary Submitted!</div>
-  <div class="success-sub">
-    Your site diary has been recorded in the project spreadsheet.<br>
-    The Project Manager has been notified automatically.<br><br>
-    <em>Diari yako imerekodiwa kwenye jedwali la mradi. Meneja wa Mradi amearifu moja kwa moja.</em>
-  </div>
+  <div class="success-title" id="savedTitle">Diary saved / Diari imehifadhiwa</div>
+  <div class="success-sub" id="savedDescription"></div>
   <div class="success-meta" id="successMeta"></div>
   <button class="btn-again" onclick="location.reload()">Submit another / Wasilisha nyingine</button>
 </div>
@@ -1079,7 +1091,9 @@ select{
 let cur = 1;
 const TOTAL = 9;
 const counts = { planned:0, actual:0, hours:8 };
+let selectedIncident = '';
 let selectedWx = '';
+function escapeHTML(value) { return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let selectedTarget = '';
 let selectedProg = '';
 let selectedInstr = '';
@@ -1089,20 +1103,20 @@ let safetyAnswers = {};
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwQcIbkY1Hq6Hb7sEQp23Q6Uv6GQPMOlh59VLKyA5BhIGaICtXFXwMfg4GeOPe4ow8nnw/exec';
 
 // ── INIT ───────────────────────────────────────────────────
-document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
+document.getElementById('f_date').value = new Intl.DateTimeFormat('en-CA', {timeZone:'Africa/Dar_es_Salaam', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date());
 
-// Sheet URL loaded from localStorage
+// Deployment is configured in source; browser storage never selects the endpoint.
 if (SHEET_URL) {
-  console.log('Google Sheet connected.');
+  console.log('Submission endpoint configured; delivery has not been verified.');
 }
 
 // Build dots
 const dotsEl = document.getElementById('dots');
-for (let i = 1; i <= TOTAL; i++) {
+for (const i of [1,2,3,4,5,7,8,9,6]) {
   const d = document.createElement('div');
   d.className = 'dot' + (i === 1 ? ' active' : '');
   d.id = 'dot' + i;
-  d.onclick = () => next(i);
+  d.onclick = () => window.next(i);
   dotsEl.appendChild(d);
 }
 updateProg();
@@ -1131,30 +1145,15 @@ safetyData.forEach(([en, sw, key]) => {
 });
 
 // ── FUNCTIONS ──────────────────────────────────────────────
-function next(n) {
-  document.getElementById('p' + cur).style.display = 'none';
-  document.getElementById('dot' + cur).classList.remove('active');
-  if (n < cur) document.getElementById('dot' + (cur)).classList.remove('done');
-  document.getElementById('dot' + cur).classList.add('done');
-  cur = n;
-  document.getElementById('p' + cur).style.display = 'block';
-  document.getElementById('dot' + cur).classList.remove('done');
-  document.getElementById('dot' + cur).classList.add('active');
-  updateProg();
-  if (cur === 6) showInstallPrompt();
-  if (cur === 7) setTimeout(buildWorkerList, 100);
-  if (cur === 8) setTimeout(buildTaskCards, 100);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
 function updateProg() {
-  const pct = Math.round(((cur - 1) / TOTAL) * 100);
+  const pct = Math.round(([1,2,3,4,5,7,8,9,6].indexOf(cur) / (TOTAL - 1)) * 100);
   document.getElementById('progFill').style.width = pct + '%';
 }
 
 function pick(el, group) {
   el.closest('.choices').querySelectorAll('.choice').forEach(i => i.classList.remove('sel'));
   el.classList.add('sel');
+  if (group === 'incident') selectedIncident = el.textContent.trim().startsWith('Yes') ? 'yes' : 'no';
   if (group === 'wx') selectedWx = el.textContent.trim().split('—')[0].trim();
   if (group === 'target') selectedTarget = el.textContent.trim();
   if (group === 'wximpact') selectedWxImpact = el.textContent.trim();
@@ -1162,6 +1161,13 @@ function pick(el, group) {
 }
 
 function chk(el) {
+  const selecting = !el.classList.contains('on');
+  const none = el.textContent.includes('No delays');
+  if (selecting) el.closest('.checks').querySelectorAll('.chk').forEach(other => {
+    if (other !== el && (none || other.textContent.includes('No delays'))) {
+      other.classList.remove('on'); other.querySelector('.chk-box').textContent = '';
+    }
+  });
   el.classList.toggle('on');
   el.querySelector('.chk-box').textContent = el.classList.contains('on') ? '✓' : '';
 }
@@ -1169,14 +1175,14 @@ function chk(el) {
 function ragPick(btn, color) {
   btn.closest('.rag').querySelectorAll('.rag-btn').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  selectedProg = btn.getAttribute('data-val') || btn.textContent.trim().split('\n')[0].replace(/[✓⚠✗]\s*/,'').trim();
+  selectedProg = btn.getAttribute('data-val') || ''; 
 }
 
 function sPick(btn, val, key) {
   btn.closest('.safety-btns').querySelectorAll('.sbtn').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
   safetyAnswers[key] = val;
-  const anyYes = Object.values(safetyAnswers).includes('yes');
+  const anyYes = getSafetyIssues() !== 'None';
   document.getElementById('safetyDetail').style.display = anyYes ? 'block' : 'none';
 }
 
@@ -1188,38 +1194,18 @@ function adj(field, delta) {
 function show(id) { document.getElementById(id).style.display = 'block'; }
 function hide(id) { document.getElementById(id).style.display = 'none'; }
 
-function showPreviews(input) {
-  const prev = document.getElementById('photoPrev');
-  prev.innerHTML = '';
-  [...input.files].slice(0, 5).forEach(f => {
-    const img = document.createElement('img');
-    img.className = 'photo-thumb';
-    img.src = URL.createObjectURL(f);
-    prev.appendChild(img);
-  });
-}
-
 function getDelays() {
-  return [...document.querySelectorAll('.chk.on')].map(c => c.textContent.trim().split('—')[0].trim()).join(', ') || 'None';
+  return [...document.querySelectorAll('.chk.on')].map(c => c.textContent.replace(/^\s*✓\s*/, '').trim().split('—')[0].trim()).join(', ') || 'None';
 }
 
 function getSafetyIssues() {
   return Object.entries(safetyAnswers)
-    .filter(([k, v]) => v === 'yes')
+    .filter(([k, v]) => ['nearmiss','accident'].includes(k) ? v === 'yes' : v === 'no')
     .map(([k]) => k).join(', ') || 'None';
 }
 
 // ── SETUP ─────────────────────────────────────────────────
-function saveUrl() {
-  const url = document.getElementById('sheetUrl').value.trim();
-  if (!url || !url.includes('script.google.com')) {
-    alert('Please paste a valid Google Apps Script URL.\nTafadhali weka URL sahihi ya Google Apps Script.');
-    return;
-  }
-  localStorage.setItem('BEL_SHEET_URL', url); // saved but hardcoded URL takes priority
-  document.getElementById('setupGuide').style.display = 'none';
-  alert('✓ Connected! The form will now save to your Google Sheet.\n✓ Imeunganishwa! Fomu sasa itahifadhi kwenye Google Sheet yako.');
-}
+function saveUrl() { alert('Deployment URLs are configured in the app source. Contact the administrator / Wasiliana na msimamizi.'); }
 
 function copyScript() {
   const text = document.getElementById('scriptCode').textContent;
@@ -1231,109 +1217,9 @@ function copyScript() {
   });
 }
 
-// ── SUBMIT ─────────────────────────────────────────────────
-let isSubmitting = false;
-async function submitForm() {
-  if (isSubmitting) return; // prevent duplicate submission from double-click
-  isSubmitting = true;
-  const proj = document.getElementById('f_project').value;
-  const date = document.getElementById('f_date').value;
-  const engineer = document.getElementById('f_engineer').value.trim();
-  const workDone = document.getElementById('f_workDone').value.trim();
-  const signName = document.getElementById('f_signName').value.trim();
-  const errMsg = document.getElementById('errMsg');
-
-  if (!proj || !date || !engineer || !workDone || !signName) {
-    errMsg.classList.add('show');
-    return;
-  }
-  errMsg.classList.remove('show');
-
-  const submitBtn = document.getElementById('submitBtn');
-  const submitTxt = document.getElementById('submitTxt');
-  submitBtn.disabled = true;
-  submitBtn.style.background = '#1A4A7A';
-  submitTxt.textContent = '⏳  Submitting...';
-
-  const data = {
-    project: proj,
-    date: date || new Date().toISOString().split('T')[0],
-    engineer: engineer,
-    planned: counts.planned,
-    actual: counts.actual,
-    hours: counts.hours,
-    weather: selectedWx || 'Not specified',
-    weatherImpact: selectedWxImpact || 'Not answered',
-    weatherDetail: document.getElementById('f_weatherDetail').value,
-    delays: getDelays(),
-    hoursLost: document.getElementById('f_hoursLost').value || '0',
-    workDone: workDone,
-    progStatus: selectedProg || 'Not specified',
-    targetMet: selectedTarget || 'Not answered',
-    targetNotes: document.getElementById('f_targetNotes')?.value || '',
-    tomorrow: document.getElementById('f_tomorrow').value,
-    safetyIssues: getSafetyIssues(),
-    safetyDetail: document.getElementById('f_safetyDetail').value || '',
-    materials: document.getElementById('f_materials').value || 'None',
-    plant: document.getElementById('f_plant').value || 'None',
-    instructions: document.getElementById('f_instructions')?.value || 'None',
-    otherNotes: document.getElementById('f_otherNotes').value || '',
-    signName: signName,
-    timesheetSummary: getTimesheetSummary(),
-    otReason: document.getElementById('f_otReason')?.value || '',
-    hrIssue: document.getElementById('f_hrIssue')?.value || '',
-    tasksTomorrow: getTasksSummary(),
-    materialsNeeded: document.getElementById('f_materialsNeeded')?.value || '',
-    incidentReport: getIncidentSummary(),
-  };
-
-  // Submit to Google Sheets using iframe ONLY (single submission, no duplicates)
-  if (SHEET_URL) {
-    try {
-      const params = new URLSearchParams();
-      // Add unique submission token to prevent duplicate processing
-      data.submissionId = Date.now() + '_' + Math.random().toString(36).substr(2,6);
-      Object.entries(data).forEach(([k, v]) => params.append(k, String(v)));
-      const reqUrl = SHEET_URL + '?' + params.toString();
-      
-      // Single hidden iframe submission - reliable, no duplicate
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = reqUrl;
-      document.body.appendChild(iframe);
-      
-      // Clean up iframe after 8 seconds
-      setTimeout(() => { 
-        if (iframe.parentNode) iframe.parentNode.removeChild(iframe); 
-      }, 8000);
-    } catch (err) {
-      console.log('Submit note:', err);
-    }
-  }
-
-  // Show success
-  isSubmitting = false; // reset lock after successful submission
-  document.getElementById('formWrap').style.display = 'none';
-  document.getElementById('dots').style.display = 'none';
-  document.getElementById('progFill').style.width = '100%';
-  const _d = date ? new Date(date + 'T12:00:00') : null;
-  const d = _d ? _d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
-  const dSw = _d ? _d.toLocaleDateString('sw', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '';
-  const progColor = selectedProg.toLowerCase().includes('track') ? '#1A5C35' : selectedProg.toLowerCase().includes('risk') ? '#B45309' : '#991B1B';
-  document.getElementById('successMeta').innerHTML = `
-    <strong style="font-size:15px;color:#0B1F3A">${proj}</strong><br>
-    <span style="color:#64748B">${d}</span><br><br>
-    👷 Engineer: <strong>${engineer}</strong><br>
-    🔨 Workers on site: <strong>${counts.actual}</strong> (${counts.planned} planned)<br>
-    📊 Programme: <strong style="color:${progColor}">${selectedProg || 'Not specified'}</strong><br>
-    ✅ Submitted by: <strong>${signName}</strong><br>
-    🕐 Time: <strong>${new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'})} EAT</strong>`;
-  document.getElementById('successScreen').classList.add('show');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
 // NOTIFICATIONS & REMINDERS
 async function requestNotifications() {
+  if (!('Notification' in window)) return;
   if ('Notification' in window && Notification.permission === 'default') {
     const perm = await Notification.requestPermission();
     if (perm === 'granted') scheduleReminder();
@@ -1371,7 +1257,7 @@ function showInstallPrompt() {
   if (el) el.style.display = 'block';
 }
 
-requestNotifications();requestNotifications();
+// Notification permission is requested only through an explicit user action.
 
 // ── PERMANENT STAFF LIST ───────────────────────────────────
 // UPDATE THESE NAMES with actual staff names when available
@@ -1409,7 +1295,9 @@ function buildWorkerList() {
 }
 
 function updateTS(idx, field, val) {
-  timesheetData[idx][field] = parseFloat(val) || 0;
+  timesheetData[idx][field] = Math.min(field === 'ot' ? 6 : 12, Math.max(0, Number(val) || 0));
+  const input = document.getElementById((field === 'ot' ? 'ts_ot_' : 'ts_h_') + idx);
+  if (input) input.value = timesheetData[idx][field];
   updateTotals();
 }
 
@@ -1441,7 +1329,7 @@ function getTimesheetSummary() {
   STAFF.forEach((name, i) => {
     const d = timesheetData[i] || {};
     if (d.absent) { lines.push(name + ': ABSENT'); }
-    else { lines.push(name + ': ' + (d.hours||8) + 'hrs' + (d.ot > 0 ? ' + ' + d.ot + 'OT' : '')); }
+    else { lines.push(name + ': ' + (d.hours ?? 0) + 'hrs' + (d.ot > 0 ? ' + ' + d.ot + 'OT' : '')); }
   });
   return lines.join(' | ');
 }
@@ -1511,6 +1399,7 @@ function selectSeverity(btn, level) {
 }
 
 function getIncidentSummary() {
+  if (selectedIncident !== 'yes') return 'None';
   const type = document.getElementById('f_incidentType')?.value || '';
   const severity = document.getElementById('f_severity')?.value || '';
   const desc = document.getElementById('f_incidentDesc')?.value?.trim() || '';
@@ -1523,6 +1412,73 @@ function getIncidentSummary() {
          ' LOCATION:' + location + ' PEOPLE:' + people + 
          ' DESC:' + desc + ' ACTION:' + action;
 }
+
+
+/* ── BEL RELIABLE DRAFT, OFFLINE QUEUE AND NAVIGATION ── */
+(function(){
+  const BEL_PAGE_ORDER=[1,2,3,4,5,7,8,9,6];
+  const BEL_DRAFT_KEY='BEL_DAILY_DRAFT_V4';
+  const BEL_QUEUE_KEY='BEL_DAILY_QUEUE_V4';
+  const BEL_PHOTO_DB='bel-diary-media-v1';
+  let BEL_page=1;
+  let BEL_queue=belRead(BEL_QUEUE_KEY,[]);
+  let BEL_active=null;
+  let BEL_currentId=BEL_queue[0] && BEL_queue[0].submissionId || '';
+  let BEL_draftTimer=null;
+  let BEL_photoManifest=[];
+  let BEL_photoDbPromise=null;
+  function belRead(key,fallback){try{const value=JSON.parse(localStorage.getItem(key)||'null');return value==null?fallback:value;}catch(_){return fallback;}}
+  function belWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch(_){return false;}}
+  function belUuid(){if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();return 'bel-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);}
+  function belSetStatus(kind,detail){const el=document.getElementById('appStatus');if(!el)return;const base={online:'Online / Mtandaoni',offline:'Offline — report saved / Nje ya mtandao — diari imehifadhiwa',pending:'Pending submission / Inasubiri kutumwa',saved:'Submitted successfully / Imetumwa kwa mafanikio',failed:'Submission failed — try again / Kutuma kumeshindikana — jaribu tena'}[kind]||kind;el.className=kind;el.textContent=detail?base+' · '+detail:base;}
+  function belError(text,target){document.querySelectorAll('.field-invalid').forEach(el=>el.classList.remove('field-invalid'));const err=document.getElementById('errMsg');if(err){err.textContent=text;err.classList.add('show');}if(target){target.classList.add('field-invalid');target.scrollIntoView({behavior:'smooth',block:'center'});if(typeof target.focus==='function')setTimeout(()=>target.focus({preventScroll:true}),250);}}
+  function belClearError(){document.querySelectorAll('.field-invalid').forEach(el=>el.classList.remove('field-invalid'));const err=document.getElementById('errMsg');if(err){err.textContent='';err.classList.remove('show');}}
+  function belValue(id){const el=document.getElementById(id);return el?String(el.value||'').trim():'';}
+  function belRequire(id,message){const el=document.getElementById(id);if(!el||!belValue(id)){belError(message,el);return false;}return true;}
+  function belChoice(group,message){const choices=document.querySelector(group);if(!choices||!choices.querySelector('.sel')){belError(message,choices||null);return false;}return true;}
+  function belValidate(page){
+    if(page===1){if(!belRequire('f_project','Project / Mradi is required. Chagua mradi.'))return false;if(!belRequire('f_date','Date / Tarehe is required. Chagua tarehe.'))return false;if(!belRequire('f_engineer','Your name / Jina lako is required. Andika jina lako.'))return false;}
+    if(page===3){if(!belRequire('f_workDone','Work done / Kazi iliyofanywa is required. Eleza kazi ya leo.'))return false;if(!selectedTarget)return belChoice('#p3 .choices','Target result / Matokeo ya lengo is required. Chagua jibu.');if(!selectedProg)return belError('Programme status / Hali ya mpango is required. Chagua On Track, At Risk or Delayed.',document.querySelector('#p3 .rag'));}
+    if(page===4){for(const item of safetyData){if(!safetyAnswers[item[2]]){const row=document.querySelectorAll('#safetyList .safety-item')[safetyData.indexOf(item)];return belError(item[0]+' / '+item[1]+' must be answered.',row||null);}}if(getSafetyIssues()!=='None'&&!belValue('f_safetyDetail'))return belRequire('f_safetyDetail','Safety detail / Maelezo ya usalama is required because a concern was flagged.');}
+    if(page===9){if(!selectedIncident)return belChoice('#p9 .choices','Incident answer / Jibu la tukio is required. Chagua Yes or No.');if(selectedIncident==='yes'){if(!belValue('f_incidentType'))return belError('Incident type / Aina ya tukio is required. Chagua aina.',document.querySelector('.incident-type-grid'));if(!belValue('f_severity'))return belError('Severity / Uzito wa tukio is required. Chagua uzito.',document.querySelector('.severity-row'));if(!belRequire('f_incidentDesc','Incident description / Maelezo ya tukio is required. Eleza kilichotokea.'))return false;}}
+    if(page===6){if(!belRequire('f_signName','Sign-off name / Jina la kuthibitisha is required. Andika jina lako.'))return false;}
+    return true;
+  }
+  function belShowPage(page){BEL_page=page;cur=page;document.querySelectorAll('.ms-page').forEach(el=>el.style.display='none');const current=document.getElementById('p'+page);if(current)current.style.display='block';document.querySelectorAll('.dot').forEach(dot=>dot.classList.remove('active'));const dot=document.getElementById('dot'+page);if(dot)dot.classList.add('active');BEL_PAGE_ORDER.forEach((p,i)=>{const d=document.getElementById('dot'+p);if(d)d.classList.toggle('done',i<BEL_PAGE_ORDER.indexOf(page));});updateProg();if(page===6)showInstallPrompt();if(page===7){buildWorkerList();setTimeout(belRestoreFieldValues,0);}if(page===8){buildTaskCards();setTimeout(belRestoreFieldValues,0);}belScheduleDraft();window.scrollTo({top:0,behavior:'smooth'});}
+  window.next=function(page){const target=Number(page);const from=BEL_PAGE_ORDER.indexOf(BEL_page);const to=BEL_PAGE_ORDER.indexOf(target);if(to<0)return;if(to>from){for(let i=from;i<to;i++)if(!belValidate(BEL_PAGE_ORDER[i])){belShowPage(BEL_PAGE_ORDER[i]);return;}}belClearError();belShowPage(target);};
+  function belCollectFields(){const fields={};document.querySelectorAll('#formWrap input,#formWrap select,#formWrap textarea').forEach(el=>{if(el.id&&el.type!=='file')fields[el.id]=el.value;});return fields;}
+  function belDraft(){return {version:4,page:BEL_page,fields:belCollectFields(),counts:{planned:counts.planned,actual:counts.actual,hours:counts.hours},selected:{wx:selectedWx,target:selectedTarget,prog:selectedProg,instr:selectedInstr,wxImpact:selectedWxImpact,incident:selectedIncident},safety:{...safetyAnswers},timesheet:{...timesheetData},tasks:[...taskPriorities],photos:[...BEL_photoManifest],savedAt:new Date().toISOString()};}
+  function belScheduleDraft(){clearTimeout(BEL_draftTimer);BEL_draftTimer=setTimeout(belSaveDraft,180);}
+  function belSaveDraft(){if(document.getElementById('successScreen')?.classList.contains('show'))return;const ok=belWrite(BEL_DRAFT_KEY,belDraft());if(ok&&BEL_queue.length===0&&navigator.onLine)belSetStatus('online');}
+  function belRestoreFieldValues(){const draft=belRead(BEL_DRAFT_KEY,null);if(!draft||draft.version!==4)return;Object.entries(draft.fields||{}).forEach(([id,value])=>{const el=document.getElementById(id);if(el&&el.type!=='file')el.value=value;});}
+  function belRestoreDraft(){const draft=belRead(BEL_DRAFT_KEY,null);if(!draft||draft.version!==4)return;Object.assign(counts,draft.counts||{});selectedWx=draft.selected?.wx||'';selectedTarget=draft.selected?.target||'';selectedProg=draft.selected?.prog||'';selectedInstr=draft.selected?.instr||'';selectedWxImpact=draft.selected?.wxImpact||'';selectedIncident=draft.selected?.incident||'';safetyAnswers={...(draft.safety||{})};timesheetData={...(draft.timesheet||{})};taskPriorities=[...(draft.tasks||taskPriorities)];BEL_photoManifest=[...(draft.photos||[])];document.getElementById('c_planned').textContent=counts.planned;document.getElementById('c_actual').textContent=counts.actual;document.getElementById('c_hours').textContent=counts.hours;belRestoreFieldValues();document.querySelectorAll('#p2 .choices .choice').forEach(el=>{const text=el.textContent.trim();if((selectedWx&&text.includes(selectedWx))||(selectedWxImpact&&text===selectedWxImpact)||(selectedInstr&&text===selectedInstr))el.classList.add('sel');});document.querySelectorAll('#p3 .choices .choice').forEach(el=>{if(selectedTarget&&el.textContent.trim()===selectedTarget)el.classList.add('sel');});document.querySelectorAll('#p3 .rag-btn').forEach(el=>{if(el.getAttribute('data-val')===selectedProg)el.classList.add('on');});document.querySelectorAll('#p9 .choices .choice').forEach(el=>{if((selectedIncident==='yes')===el.textContent.trim().startsWith('Yes'))el.classList.add('sel');});safetyData.forEach((item,i)=>{const value=safetyAnswers[item[2]];const row=document.querySelectorAll('#safetyList .safety-item')[i];if(row&&value)row.querySelectorAll('.sbtn').forEach(btn=>{if((value==='yes'&&btn.classList.contains('y'))||(value==='no'&&btn.classList.contains('n'))||(value==='na'&&btn.classList.contains('na')))btn.classList.add('on');});});if(selectedIncident==='yes')show('incidentDetail');if(getSafetyIssues()!=='None')show('safetyDetail');belShowPage(BEL_PAGE_ORDER.includes(draft.page)?draft.page:1);belRestorePhotos();}
+  function belOpenPhotoDb(){if(!('indexedDB' in window))return Promise.resolve(null);if(BEL_photoDbPromise)return BEL_photoDbPromise;BEL_photoDbPromise=new Promise(resolve=>{const req=indexedDB.open(BEL_PHOTO_DB,1);req.onupgradeneeded=()=>req.result.createObjectStore('photos');req.onsuccess=()=>resolve(req.result);req.onerror=()=>resolve(null);});return BEL_photoDbPromise;}
+  function belStorePhoto(key,blob){return belOpenPhotoDb().then(db=>new Promise(resolve=>{if(!db)return resolve(false);const tx=db.transaction('photos','readwrite');tx.objectStore('photos').put(blob,key);tx.oncomplete=()=>resolve(true);tx.onerror=()=>resolve(false);}));}
+  function belGetPhoto(key){return belOpenPhotoDb().then(db=>new Promise(resolve=>{if(!db)return resolve(null);const tx=db.transaction('photos','readonly');const req=tx.objectStore('photos').get(key);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);}));}
+  function belDeletePhotos(keys){return belOpenPhotoDb().then(db=>new Promise(resolve=>{if(!db)return resolve();const tx=db.transaction('photos','readwrite');(keys||[]).forEach(key=>tx.objectStore('photos').delete(key));tx.oncomplete=()=>resolve();tx.onerror=()=>resolve();}));}
+  function belCompressPhoto(file){return new Promise(resolve=>{const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{const max=1280;const ratio=Math.min(1,max/Math.max(img.naturalWidth||max,img.naturalHeight||max));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round((img.naturalWidth||max)*ratio));canvas.height=Math.max(1,Math.round((img.naturalHeight||max)*ratio));const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{URL.revokeObjectURL(url);resolve(blob||file);},'image/jpeg',0.72);};img.onerror=()=>{URL.revokeObjectURL(url);resolve(file);};img.src=url;});}
+  async function belHandlePhotos(input){const files=[...(input.files||[])].slice(0,5);BEL_photoManifest=[];document.getElementById('photoPrev').innerHTML='';for(let i=0;i<files.length;i++){const blob=await belCompressPhoto(files[i]);const key='draft-photo-'+i;await belStorePhoto(key,blob);BEL_photoManifest.push({key,name:files[i].name,type:'image/jpeg',size:blob.size});const img=document.createElement('img');img.className='photo-thumb';img.src=URL.createObjectURL(blob);img.alt=files[i].name;document.getElementById('photoPrev').appendChild(img);}belScheduleDraft();belSetStatus(navigator.onLine?'online':'offline');}
+  window.showPreviews=belHandlePhotos;
+  function belRestorePhotos(){const preview=document.getElementById('photoPrev');if(!preview)return;preview.innerHTML='';BEL_photoManifest.forEach(meta=>belGetPhoto(meta.key).then(blob=>{if(!blob)return;const img=document.createElement('img');img.className='photo-thumb';img.src=URL.createObjectURL(blob);img.alt=meta.name;preview.appendChild(img);}));}
+  function belEnqueue(record){if(!BEL_queue.some(item=>item.submissionId===record.submissionId))BEL_queue.push(record);belWrite(BEL_QUEUE_KEY,BEL_queue);BEL_currentId=record.submissionId;}
+  function belRemove(id){BEL_queue=BEL_queue.filter(item=>item.submissionId!==id);belWrite(BEL_QUEUE_KEY,BEL_queue);}
+  function belBuildRecord(){return {project:belValue('f_project'),date:belValue('f_date'),engineer:belValue('f_engineer'),planned:counts.planned,actual:counts.actual,hours:counts.hours,weather:selectedWx||'Not specified',weatherImpact:selectedWxImpact||'Not answered',weatherDetail:belValue('f_weatherDetail'),delays:getDelays(),hoursLost:belValue('f_hoursLost')||'0',workDone:belValue('f_workDone'),progStatus:selectedProg,targetMet:selectedTarget,targetNotes:belValue('f_targetNotes'),tomorrow:belValue('f_tomorrow'),safetyIssues:getSafetyIssues(),safetyDetail:getSafetyIssues()!=='None'?belValue('f_safetyDetail'):'',materials:belValue('f_materials')||'None',plant:belValue('f_plant')||'None',instructions:belValue('f_instructions')||'None',otherNotes:belValue('f_otherNotes'),signName:belValue('f_signName'),timesheetSummary:getTimesheetSummary(),otReason:belValue('f_otReason'),hrIssue:belValue('f_hrIssue'),tasksTomorrow:getTasksSummary(),materialsNeeded:belValue('f_materialsNeeded'),incidentReport:getIncidentSummary(),submissionId:belUuid(),photoManifest:BEL_photoManifest};}
+  function belShowPending(record){document.getElementById('formWrap').style.display='none';document.getElementById('dots').style.display='none';document.getElementById('progFill').style.width='100%';document.getElementById('savedTitle').textContent='Pending submission / Inasubiri kutumwa';document.getElementById('savedDescription').textContent='Report saved on this phone and will send automatically when internet returns. Do not submit it again. / Diari imehifadhiwa kwenye simu na itatumwa mtandao ukirudi. Usitume tena.';document.getElementById('successMeta').textContent=record.project+'\\n'+record.date+'\\nEngineer / Mhandisi: '+record.engineer+'\\nReference: '+record.submissionId;document.getElementById('successMeta').style.whiteSpace='pre-line';document.getElementById('successScreen').classList.add('show');}
+  function belShowSaved(record,result){document.getElementById('formWrap').style.display='none';document.getElementById('dots').style.display='none';document.getElementById('progFill').style.width='100%';document.getElementById('savedTitle').textContent='Submitted successfully / Imetumwa kwa mafanikio';const email=result.emailStatus==='sent'?'Notification emails sent / Barua pepe zimetumwa.':'Report saved, but notification email status is '+(result.emailStatus||'unknown')+'. Ask an administrator to check; do not resubmit. / Diari imehifadhiwa lakini hali ya barua pepe haijakamilika. Usitume tena.';document.getElementById('savedDescription').textContent='The Google Sheet confirmed this diary. '+email;document.getElementById('successMeta').textContent=record.project+'\\n'+record.date+'\\nEngineer / Mhandisi: '+record.engineer+'\\nProgramme: '+record.progStatus+'\\nReference: '+record.submissionId;document.getElementById('successMeta').style.whiteSpace='pre-line';document.getElementById('successScreen').classList.add('show');belWrite(BEL_DRAFT_KEY,null);belDeletePhotos((record.photoManifest||[]).map(p=>p.key));belSetStatus('saved');}
+  function belCleanActive(){if(!BEL_active)return;clearTimeout(BEL_active.timer);BEL_active.form.remove();BEL_active.frame.remove();BEL_active=null;}
+  function belDispatch(record){if(BEL_active||!record)return;if(!navigator.onLine){belSetStatus('offline');return;}if(['https://benchmarkengineering.co.tz','https://www.benchmarkengineering.co.tz','https://warithsaid23-ops.github.io'].indexOf(location.origin)<0){belSetStatus('failed','Open the deployed website to send / Tumia tovuti iliyochapishwa kutuma.');return;}belSetStatus('pending');const frame=document.createElement('iframe');const form=document.createElement('form');const nonce=belUuid();frame.name='bel-'+nonce.replace(/-/g,'');frame.title='Diary submission';frame.style.display='none';form.method='POST';form.action=SHEET_URL;form.target=frame.name;form.style.display='none';const payload={...record,responseMode:'iframe',parentOrigin:location.origin,responseNonce:nonce};Object.entries(payload).forEach(([key,value])=>{const input=document.createElement('input');input.type='hidden';input.name=key;input.value=typeof value==='string'?value:JSON.stringify(value);form.appendChild(input);});BEL_active={record,frame,form,nonce,timer:null};document.body.appendChild(frame);document.body.appendChild(form);BEL_active.timer=setTimeout(()=>{belCleanActive();belSetStatus('failed','No confirmation received. Retry the same report / Hakuna uthibitisho. Jaribu diari ileile tena.');},60000);try{form.submit();}catch(_){belCleanActive();belSetStatus('failed');}}
+  function belFlushQueue(){BEL_queue=belRead(BEL_QUEUE_KEY,BEL_queue);if(!BEL_queue.length){if(navigator.onLine)belSetStatus('online');return;}if(!BEL_currentId)BEL_currentId=BEL_queue[0].submissionId;if(!BEL_active)belDispatch(BEL_queue[0]);}
+  function belHandleMessage(event){if(!/^https:\/\/(?:script\.google\.com|script\.googleusercontent\.com|[a-z0-9-]+-script\.googleusercontent\.com)$/.test(event.origin))return;if(!BEL_active||event.source!==BEL_active.frame.contentWindow)return;const msg=event.data||{};if(msg.type!=='BEL_DIARY_RESULT'||msg.submissionId!==BEL_active.record.submissionId||msg.nonce!==BEL_active.nonce)return;const record=BEL_active.record;const result=msg.result||{};belCleanActive();if(result.saved===true&&(result.status==='success'||result.status==='duplicate')){belRemove(record.submissionId);if(record.submissionId===BEL_currentId){BEL_currentId='';belShowSaved(record,result);}else belSetStatus('saved');setTimeout(belFlushQueue,0);}else{belSetStatus('failed',String(result.message||'Retry the same report / Jaribu diari ileile tena.'));}}
+  window.addEventListener('message',belHandleMessage);
+  window.addEventListener('online',()=>{belSetStatus('online');belFlushQueue();});window.addEventListener('offline',()=>belSetStatus('offline'));
+  document.addEventListener('input',()=>belScheduleDraft(),true);document.addEventListener('change',()=>belScheduleDraft(),true);document.addEventListener('click',event=>{if(event.target.closest('.choice,.chk,.sbtn,.rag-btn,.priority-btn,.inc-type-btn,.sev-btn,.cbtn'))belScheduleDraft();},true);
+  window.submitForm=function(){if(BEL_currentId&&BEL_queue.some(item=>item.submissionId===BEL_currentId)){belFlushQueue();return;}belClearError();for(const page of BEL_PAGE_ORDER)if(!belValidate(page)){belShowPage(page);return;}const record=belBuildRecord();belEnqueue(record);belSaveDraft();if(!navigator.onLine){belSetStatus('offline');belShowPending(record);return;}belSetStatus('pending','Saving to Google Sheet / Inahifadhi kwenye Google Sheet');belFlushQueue();};
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if(BEL_queue.length)belSetStatus(navigator.onLine?'pending':'offline');else belSetStatus(navigator.onLine?'online':'offline');
+  try{buildWorkerList();buildTaskCards();}catch(_){}
+  belRestoreDraft();if(BEL_queue.length&&navigator.onLine)belFlushQueue();
+  window.BEL_app={saveDraft:belSaveDraft,flushQueue:belFlushQueue,queue:()=>belRead(BEL_QUEUE_KEY,[])};
+})();
 
 </script>
 </body>

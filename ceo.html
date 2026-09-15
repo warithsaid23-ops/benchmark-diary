@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BEL — CEO Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F2340">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
@@ -470,14 +472,41 @@ setInterval(updateClock, 1000);
 
 // ── STATE ──────────────────────────────────────────────────
 let allReports = [];
+let loadingData = false;
+function escapeHTML(value) { return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function safeReport(r) { return Object.fromEntries(Object.entries(r).map(([k,v]) => [k,escapeHTML(v)])); }
 let activeFilter = 'all';
 // Hardcoded CSV URL — works on every device automatically
 const HARDCODED_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTS17qI7XxT_8dNh_h-L55ettk2nhbYAB4ECHMcEiHDIZnTHY1sxHUkg8AYb9rGotPrMQDGU_gH1fCK/pub?gid=0&single=true&output=csv';
 let SHEET_CSV = HARDCODED_CSV;
+const BEL_CSV_CACHE_KEY = 'BEL_CEO_CSV_V2';
+
+function renderCachedDashboard(){
+  let raw=null, cachedAt='';
+  try{raw=localStorage.getItem(BEL_CSV_CACHE_KEY);}catch(_){return false;}
+  if(!raw)return false;
+  let csv=raw;
+  try{const cached=JSON.parse(raw);if(cached&&cached.csv){csv=cached.csv;cachedAt=cached.savedAt||'';}}catch(_){}
+  try{
+    allReports=parseCSV(csv);
+    renderStats();
+    applyFilters();
+    updateLastRefreshed('Last sync');
+    document.getElementById('statsRow').style.display='grid';
+    document.getElementById('filtersRow').style.display='flex';
+    const when=cachedAt?new Date(cachedAt).toLocaleString('en-GB',{timeZone:'Africa/Dar_es_Salaam'}):'previous sync';
+    const notice=document.createElement('div');
+    notice.textContent='Offline - showing the last synced records / Nje ya mtandao - inaonyesha rekodi za mwisho zilizolandanishwa: '+when;
+    notice.style.cssText='background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px';
+    const reports=document.getElementById('reportsArea');
+    reports.insertBefore(notice,reports.firstChild);
+    return true;
+  }catch(_){return false;}
+}
 
 // Hide setup card — not needed anymore
 document.getElementById('setupCard').style.display = 'none';
-loadData().then(() => updateLastRefreshed());
+loadData();
 
 // ── CONNECT SHEET ──────────────────────────────────────────
 function connectSheet(){
@@ -487,13 +516,15 @@ function connectSheet(){
     return;
   }
   SHEET_CSV = url;
-  localStorage.setItem('BEL_CEO_SHEET', url);
+  // Temporary preview only; permanent configuration is the hardcoded constant.
   document.getElementById('setupCard').style.display = 'none';
   loadData();
 }
 
 // ── LOAD DATA ──────────────────────────────────────────────
 async function loadData(){
+  if (loadingData) return;
+  loadingData = true;
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('spinning');
   document.getElementById('reportsArea').innerHTML = '<div class="loading"><div class="spinner"></div> Loading submissions...</div>';
@@ -501,6 +532,7 @@ async function loadData(){
   if(!SHEET_CSV){
     document.getElementById('reportsArea').innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><div class="empty-title">Sheet not connected</div><div class="empty-sub">Connect your sheet via the admin page.</div></div>`;
     btn.classList.remove('spinning');
+    loadingData = false;
     return;
   }
 
@@ -509,78 +541,71 @@ async function loadData(){
     let csv = null;
     const attempts = [
       SHEET_CSV,
-      'https://corsproxy.io/?' + encodeURIComponent(SHEET_CSV),
-      'https://api.allorigins.win/raw?url=' + encodeURIComponent(SHEET_CSV),
+
     ];
     
     for (const url of attempts) {
       try {
-        const res = await fetch(url, {cache: 'no-store'});
+        const fetchOptions = {cache: 'no-store'};
+        if(typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') fetchOptions.signal = AbortSignal.timeout(20000);
+        const res = await fetch(url, fetchOptions);
         if (res.ok) { csv = await res.text(); break; }
       } catch(e) { continue; }
     }
     if (!csv) throw new Error('Could not load data. Check your sheet is published as CSV (File → Share → Publish to web → CSV)');
     allReports = parseCSV(csv);
+    try{localStorage.setItem(BEL_CSV_CACHE_KEY,JSON.stringify({csv:csv,savedAt:new Date().toISOString()}));}catch(_){}
     renderStats();
-    renderReports(allReports);
+    applyFilters();
+    updateLastRefreshed();
     document.getElementById('statsRow').style.display = 'grid';
     document.getElementById('filtersRow').style.display = 'flex';
   } catch(err) {
-    document.getElementById('reportsArea').innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">⚠️</div>
-        <div class="empty-title">Could not load data</div>
-        <div class="empty-sub">Make sure your sheet is published as CSV and the URL is correct.<br>Error: ${err.message}</div>
-      </div>`;
+    if(!renderCachedDashboard()){
+      const area=document.getElementById('reportsArea');
+      area.innerHTML='';
+      const box=document.createElement('div');box.className='empty';
+      const icon=document.createElement('div');icon.className='empty-icon';icon.textContent='!';
+      const title=document.createElement('div');title.className='empty-title';title.textContent='Could not load data';
+      const sub=document.createElement('div');sub.className='empty-sub';sub.textContent='Make sure your sheet is published as CSV and the URL is correct. Error: '+err.message;
+      box.append(icon,title,sub);area.appendChild(box);
+    }
   }
   btn.classList.remove('spinning');
+  loadingData = false;
 }
 
 // ── PARSE CSV ──────────────────────────────────────────────
 function parseCSV(csv){
-  const lines = csv.split('\n').filter(l => l.trim());
-  if(lines.length < 2) return [];
-  const headers = parseCSVLine(lines[0]);
-  const rows = [];
-  for(let i = 1; i < lines.length; i++){
-    const vals = parseCSVLine(lines[i]);
-    if(vals.length < 3) continue;
-    const obj = {};
-    headers.forEach((h,j) => obj[h.trim()] = (vals[j]||'').trim());
-    rows.push(obj);
+  const rows = []; let row = [], cell = '', quoted = false;
+  csv = csv.replace(/^\uFEFF/, '');
+  for (let i=0; i<csv.length; i++) {
+    const ch=csv[i];
+    if(ch === '"') { if(quoted && csv[i+1] === '"') { cell+='"'; i++; } else quoted=!quoted; }
+    else if(ch === ',' && !quoted) { row.push(cell); cell=''; }
+    else if((ch === '\n' || ch === '\r') && !quoted) {
+      row.push(cell); if(row.some(v=>v.trim())) rows.push(row); row=[]; cell='';
+      if(ch === '\r' && csv[i+1] === '\n') i++;
+    } else cell+=ch;
   }
-  // Most recent first
-  return rows.reverse();
-}
-
-function parseCSVLine(line){
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  for(let i = 0; i < line.length; i++){
-    const ch = line[i];
-    if(ch === '"'){
-      if(inQuotes && line[i+1] === '"'){current += '"';i++;}
-      else inQuotes = !inQuotes;
-    } else if(ch === ',' && !inQuotes){
-      result.push(current);current='';
-    } else {
-      current += ch;
-    }
-  }
-  result.push(current);
-  return result;
+  if(quoted) throw Error('CSV contains an unfinished quoted field.');
+  row.push(cell); if(row.some(v=>v.trim())) rows.push(row);
+  const headers=(rows.shift() || []).map(h=>h.trim());
+  if(!['Project','Date','Engineer','Work Done'].every(h=>headers.includes(h))) throw Error('The response is not a diary CSV. Check the published sheet.');
+  return rows.filter(r=>r.some(v=>v.trim())).map(values=>Object.fromEntries(headers.map((h,j)=>[h,values[j] || '']))).reverse();
 }
 
 // ── STATS ──────────────────────────────────────────────────
+function diaryToday() { return new Intl.DateTimeFormat('en-CA', {timeZone:'Africa/Dar_es_Salaam',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
+function isTodayReport(r) {
+  const value=(r['Date'] || '').trim();
+  const uk=value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const normalized=uk ? uk[3]+'-'+uk[2].padStart(2,'0')+'-'+uk[1].padStart(2,'0') : value;
+  return normalized === diaryToday();
+}
+
 function renderStats(){
-  const today = new Date().toLocaleDateString('en-GB');
-  const todayReports = allReports.filter(r => {
-    const ts = r['Timestamp'] || '';
-    return ts.includes(new Date().toLocaleDateString('en-GB').split('/').reverse().join('/')) ||
-           ts.includes(today) ||
-           (r['Date'] && new Date(r['Date']).toLocaleDateString('en-GB') === today);
-  });
+  const todayReports = allReports.filter(isTodayReport);
   const onTrack = allReports.filter(r => (r['Programme Status']||'').toLowerCase().includes('track'));
   const issues = allReports.filter(r => {
     const s = (r['Programme Status']||'').toLowerCase();
@@ -620,7 +645,8 @@ function renderReports(reports){
   area.innerHTML = '<div class="reports-grid" id="reportsList"></div>';
   const list = document.getElementById('reportsList');
 
-  reports.forEach((r, idx) => {
+  reports.forEach((raw, idx) => {
+    const r = safeReport(raw);
     const rag = getRAG(r);
     const isOnly = reports.length === 1;
     const isFirst = idx === 0;
@@ -649,7 +675,7 @@ function renderReports(reports){
         <div class="rh-expand">▼</div>
       </div>
       <div class="report-body">
-        ${buildDiary(r)}
+        ${buildDiary(raw)}
         <div class="diary-actions">
           <button class="action-btn print" onclick="printReport(${idx})">🖨 Print / Save PDF</button>
           <button class="action-btn copy" onclick="copyReport(${idx})">📋 Copy Summary</button>
@@ -661,7 +687,12 @@ function renderReports(reports){
 }
 
 // ── BUILD FORMATTED DIARY ──────────────────────────────────
-function buildDiary(r){
+function buildExtraDiary(r) {
+  const fields = ['Timesheet Summary','OT Reason','HR Issue','Tasks Tomorrow','Materials Needed','Incident Report','Email Status'];
+  return '<div class="d-section"><div class="d-section-title">Timesheet, Tomorrow &amp; Incident Report</div>' + fields.filter(key => r[key] && r[key] !== 'None').map(key => '<div class="d-field full" style="margin-top:10px"><div class="d-field-label">' + key + '</div><div class="d-field-value" style="white-space:pre-wrap">' + r[key] + '</div></div>').join('') + '</div>';
+}
+function buildDiary(raw){
+  const r = safeReport(raw);
   const rag = getRAG(r);
   const dateStr = r['Date'] ? new Date(r['Date']+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : r['Timestamp']||'—';
   const hasSafety = r['Safety Issues'] && r['Safety Issues'] !== 'None' && r['Safety Issues'].trim();
@@ -739,6 +770,7 @@ function buildDiary(r){
 
     ${r['Other Notes'] ? `<div class="d-section"><div class="d-section-title">G — Other Notes</div><div class="d-field full"><div class="d-field-value">${r['Other Notes']}</div></div></div>` : ''}
 
+    ${buildExtraDiary(r)}
     <div class="d-section" style="margin-bottom:0">
       <div class="d-section-title">H — Sign-Off</div>
       <div class="d-grid">
@@ -773,9 +805,7 @@ function applyFilters(){
   if(activeFilter !== 'all'){
     filtered = filtered.filter(r => {
       if(activeFilter === 'today'){
-        const today = new Date().toLocaleDateString('en-GB');
-        return (r['Timestamp']||'').includes(today) ||
-               (r['Date'] && new Date(r['Date']+'T12:00:00').toLocaleDateString('en-GB') === today);
+        return isTodayReport(r);
       }
       return getRAG(r) === activeFilter;
     });
@@ -804,23 +834,20 @@ function copyReport(idx){
   });
 }
 
-// Auto-refresh every 5 minutes
+// Auto-refresh every 3 minutes
 setInterval(() => { if(SHEET_CSV) loadData(); }, 3 * 60 * 1000);
 
 // Show last updated time
-function updateLastRefreshed() {
+function updateLastRefreshed(label='Updated') {
   const badge = document.getElementById('todayBadge');
   if (badge) {
     const now = new Date();
-    const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
-    const count = allReports.filter(r => {
-      const today = new Date().toLocaleDateString('en-GB');
-      return (r['Timestamp']||'').includes(today) || 
-             (r['Date'] && new Date(r['Date']+'T12:00:00').toLocaleDateString('en-GB') === today);
-    }).length;
-    badge.textContent = count + ' today · Updated ' + time;
+    const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit',timeZone:'Africa/Dar_es_Salaam'});
+    const count = allReports.filter(isTodayReport).length;
+    badge.textContent = count + ' today - ' + label + ' ' + time;
   }
 }
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
 </html>
